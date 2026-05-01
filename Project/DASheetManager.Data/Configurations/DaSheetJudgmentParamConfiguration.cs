@@ -16,7 +16,7 @@ public class DaSheetJudgmentParamConfiguration : IEntityTypeConfiguration<DaShee
         builder.Property(e => e.SourceParamId).HasColumnName("SOURCE_PARAM_ID");
         builder.Property(e => e.Name).HasColumnName("NAME").HasMaxLength(300).IsRequired();
         builder.Property(e => e.Weightage).HasColumnName("WEIGHTAGE").IsRequired();
-        builder.Property(e => e.SortOrder).HasColumnName("SORT_ORDER").HasDefaultValue(0).IsRequired();
+        builder.Property(e => e.SortOrder).HasColumnName("SORT_ORDER").IsRequired();
 
         builder.HasMany(e => e.Evaluations).WithOne(ev => ev.Parameter).HasForeignKey(ev => ev.SheetParamId).OnDelete(DeleteBehavior.Cascade);
 
