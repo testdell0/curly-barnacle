@@ -52,23 +52,6 @@ public class CreateDASheetRequest
 {
     public string Name { get; set; } = string.Empty;
     public int SourceTemplateId { get; set; }
-    public List<CreateSheetCategoryRequest> Categories { get; set; } = new();
-}
-
-public class CreateSheetCategoryRequest
-{
-    public int? SourceCategoryId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int SortOrder { get; set; }
-    public List<CreateSheetParamRequest> Parameters { get; set; } = new();
-}
-
-public class CreateSheetParamRequest
-{
-    public int? SourceParamId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int Weightage { get; set; }
-    public int SortOrder { get; set; }
 }
 
 public class PagedResult<T>

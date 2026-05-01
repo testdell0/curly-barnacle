@@ -26,15 +26,6 @@ export function CreateSheetPage() {
       const sheet = await createSheet.mutateAsync({
         name: sheetName.trim(),
         sourceTemplateId: selectedTemplateId,
-        categories: templateDetail.categories.map((c) => ({
-          name: c.name,
-          sortOrder: c.sortOrder,
-          parameters: c.parameters.map((p) => ({
-            name: p.name,
-            weightage: p.weightage,
-            sortOrder: p.sortOrder,
-          })),
-        })),
       })
       navigate(`/sheets/${sheet.sheetId}`)
     } catch (err) {

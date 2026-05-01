@@ -87,12 +87,10 @@ public class DASheetService : IDASheetService
 
     public async Task<DASheetDetailDto> CreateFromTemplateAsync(CreateDASheetRequest request, int userId)
     {
-        // Validate total weightage = 100
-        var totalWeightage = request.Categories.SelectMany(c => c.Parameters).Sum(p => p.Weightage);
-        if (totalWeightage != 100)
-            throw new InvalidOperationException($"Total weightage must be 100%. Current: {totalWeightage}%.");
+        var template = await _uow.Templates.Query()
+            .Include(t => t.Categories).ThenInclude(c => c.Parameters)
+            .FirstOrDefaultAsync(t => t.TemplateId == request.SourceTemplateId);
 
-        var template = await _uow.Templates.GetByIdAsync(request.SourceTemplateId);
         if (template == null)
             throw new KeyNotFoundException($"Template {request.SourceTemplateId} not found.");
 
@@ -106,30 +104,23 @@ public class DASheetService : IDASheetService
             CreatedBy = userId
         };
 
-        // Snapshot categories and params
-        
-        var uniqueCategories = request.Categories
-            .GroupBy(c => c.SourceCategoryId)
-            .Select(g => g.First())
-            .ToList();
-
-        foreach (var catReq in request.Categories)
+        foreach (var tCat in template.Categories.OrderBy(c => c.SortOrder))
         {
             var category = new DaSheetCategory
             {
-                SourceCategoryId = catReq.SourceCategoryId,
-                Name = catReq.Name,
-                SortOrder = catReq.SortOrder
+                SourceCategoryId = tCat.CategoryId,
+                Name = tCat.Name,
+                SortOrder = tCat.SortOrder
             };
 
-            foreach (var paramReq in catReq.Parameters)
+            foreach (var tParam in tCat.Parameters.OrderBy(p => p.SortOrder))
             {
                 category.Parameters.Add(new DaSheetJudgmentParam
                 {
-                    SourceParamId = paramReq.SourceParamId,
-                    Name = paramReq.Name,
-                    Weightage = paramReq.Weightage,
-                    SortOrder = paramReq.SortOrder
+                    SourceParamId = tParam.ParamId,
+                    Name = tParam.Name,
+                    Weightage = tParam.Weightage,
+                    SortOrder = tParam.SortOrder
                 });
             }
 

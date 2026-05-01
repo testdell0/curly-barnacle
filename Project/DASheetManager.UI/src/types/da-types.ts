@@ -223,16 +223,9 @@ export interface SheetDetail {
   sharedWith: SharedAccessDto[]
 }
 
-export interface CreateSheetCategoryRequest {
-  name: string
-  sortOrder: number
-  parameters: CreateParamRequest[]
-}
-
 export interface CreateSheetRequest {
   name: string
   sourceTemplateId: number
-  categories: CreateSheetCategoryRequest[]
 }
 
 // ── Vendors ───────────────────────────────────────────────────────────────
@@ -257,8 +250,8 @@ export interface EvaluationDto {
 export interface EvaluationEntry {
   vendorId: number
   sheetParamId: number
-  evalScore?: number
-  vendorComment?: string
+  evalScore: number | null
+  vendorComment: string | null
 }
 
 export interface BulkSaveEvaluationsRequest {
