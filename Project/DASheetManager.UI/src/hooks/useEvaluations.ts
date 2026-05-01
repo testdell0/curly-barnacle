@@ -15,7 +15,7 @@ export function useBulkSaveEvaluations(sheetId: number) {
   return useMutation({
     mutationFn: (body: BulkSaveEvaluationsRequest) => evaluationsApi.bulkSave(sheetId, body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['evaluations', sheetId] })
+      // scores are invalidated here; evaluations are explicitly refetched by the caller
       qc.invalidateQueries({ queryKey: ['scores', sheetId] })
     },
   })

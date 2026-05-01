@@ -40,8 +40,8 @@ export function SheetDetailPage() {
   const navigate = useNavigate()
 
   const { data: sheet, isLoading } = useSheet(sheetId)
-  const { data: evaluations } = useEvaluations(sheetId)
-  const { data: scores, refetch: refetchScores } = useScores(sheetId)
+  const { data: evaluations, refetch: refetchEvaluations } = useEvaluations(sheetId)
+  const { data: scores } = useScores(sheetId)
   const addVendor = useAddVendor(sheetId)
   const deleteVendor = useDeleteVendor(sheetId)
   const bulkSave = useBulkSaveEvaluations(sheetId)
@@ -68,8 +68,8 @@ export function SheetDetailPage() {
 
   function getScore(vendorId: number, paramId: number): number | undefined {
     const key = `${vendorId}-${paramId}`
-    if (localScores[key]?.score !== undefined) return localScores[key].score
-    return evalMap[key]?.evalScore
+    if (key in localScores) return localScores[key].score   // may be undefined (user cleared)
+    return evalMap[key]?.evalScore ?? undefined              // convert null → undefined
   }
 
   function getComment(vendorId: number, paramId: number): string {
@@ -97,21 +97,19 @@ export function SheetDetailPage() {
         for (const param of cat.parameters) {
           const score = getScore(vendor.vendorId, param.sheetParamId)
           const comment = getComment(vendor.vendorId, param.sheetParamId)
-          if (score !== undefined || comment) {
-            entries.push({
-              vendorId: vendor.vendorId,
-              sheetParamId: param.sheetParamId,
-              evalScore: score,
-              vendorComment: comment || undefined,
-            })
-          }
+          entries.push({
+            vendorId: vendor.vendorId,
+            sheetParamId: param.sheetParamId,
+            evalScore: score ?? null,
+            vendorComment: comment || null,
+          })
         }
       }
     }
 
     await bulkSave.mutateAsync({ evaluations: entries })
+    await refetchEvaluations()
     setLocalScores({})
-    refetchScores()
     setSaveMsg('Evaluations saved successfully!')
     setTimeout(() => setSaveMsg(null), 3000)
   }
