@@ -1,4 +1,4 @@
-import { FileText, CheckCircle, LayoutTemplate, Users, TrendingUp, Loader2 } from 'lucide-react'
+import { FileText, CheckCircle, LayoutTemplate, Users, TrendingUp, Loader2, Eye } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useDashboardStats, useRecentSheets } from '@/hooks/useDashboard'
@@ -146,22 +146,19 @@ export function DashboardPage() {
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Creator</th>
                   )}
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Updated</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {(!recent || recent.length === 0) && (
                   <tr>
-                    <td colSpan={isAdmin ? 5 : 4} className="text-center py-10 text-gray-400">
+                    <td colSpan={isAdmin ? 6 : 5} className="text-center py-10 text-gray-400">
                       No DA sheets yet.
                     </td>
                   </tr>
                 )}
                 {recent?.map((sheet) => (
-                  <tr
-                    key={sheet.sheetId}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/sheets/${sheet.sheetId}?view=1`)}
-                  >
+                  <tr key={sheet.sheetId} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{sheet.name}</div>
                       <div className="text-xs text-gray-400">{sheet.daType} · v{sheet.version}</div>
@@ -175,6 +172,15 @@ export function DashboardPage() {
                     )}
                     <td className="px-4 py-3 text-gray-500">
                       {new Date(sheet.updatedAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => navigate(`/sheets/${sheet.sheetId}?view=1&from=dashboard`)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="View sheet"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}

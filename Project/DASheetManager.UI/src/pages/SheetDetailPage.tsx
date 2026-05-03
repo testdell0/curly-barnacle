@@ -38,6 +38,7 @@ export function SheetDetailPage() {
 
   const isViewOnly = searchParams.get('view') === '1'
   const autoOpenShare = searchParams.get('share') === '1'
+  const backTo = searchParams.get('from') === 'dashboard' ? '/' : '/sheets'
 
   const { data: sheet, isLoading } = useSheet(sheetId)
   const { data: evaluations, refetch: refetchEvaluations } = useEvaluations(sheetId)
@@ -150,7 +151,7 @@ export function SheetDetailPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/sheets')}
+            onClick={() => navigate(backTo)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
