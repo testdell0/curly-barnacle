@@ -12,7 +12,6 @@ import {
   Trophy,
   ChevronDown,
   ChevronRight,
-  MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSheet, useFinalizeSheet } from '@/hooks/useSheets'
@@ -22,7 +21,6 @@ import { api } from '@/api/client'
 import type {
   EvaluationEntry,
   EvaluationDto,
-  VendorScoreSummary,
   SharedAccessDto,
   AuditLogDto,
   CreateShareRequest,
@@ -279,27 +277,40 @@ export function SheetDetailPage() {
         </div>
       )}
 
-      {/* Evaluation Matrix + Scores (single view) */}
-      {!sheet.vendors.length ? (
-        <div className="text-center py-12 text-gray-500">Add vendors to start evaluating</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="text-left px-3 py-2 font-medium text-gray-600 border border-gray-200 min-w-[200px]">
-                  Parameter
+      {/* Evaluation Matrix — always visible; vendor columns appear once vendors are added */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse table-fixed">
+          <colgroup>
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '5%' }} />
+            {sheet.vendors.length === 0 ? (
+              <col style={{ width: '80%' }} />
+            ) : (
+              sheet.vendors.map((v) => (
+                <col key={v.vendorId} style={{ width: `${80 / sheet.vendors.length}%` }} />
+              ))
+            )}
+          </colgroup>
+          <thead>
+            <tr className="bg-gray-50">
+              <th className="text-left px-3 py-2 font-medium text-gray-600 border border-gray-200">
+                Parameter
+              </th>
+              <th className="text-center px-3 py-2 font-medium text-gray-600 border border-gray-200">
+                Wt.
+              </th>
+              {sheet.vendors.length === 0 ? (
+                <th className="border border-gray-200 bg-gray-800 text-white px-4 py-3 text-center text-sm font-normal italic">
+                  Add a vendor to evaluate
                 </th>
-                <th className="text-center px-3 py-2 font-medium text-gray-600 border border-gray-200 w-20">
-                  Weight
-                </th>
-                {sheet.vendors.map((v) => {
+              ) : (
+                sheet.vendors.map((v) => {
                   const vendorScore = scores?.find((s) => s.vendorId === v.vendorId)
                   return (
                     <th
                       key={v.vendorId}
                       className={cn(
-                        'text-center px-3 py-2 font-medium border border-gray-200 min-w-[200px]',
+                        'text-center px-3 py-2 font-medium border border-gray-200',
                         vendorScore?.isWinner ? 'bg-amber-50 text-amber-800' : 'text-gray-600',
                       )}
                     >
@@ -317,51 +328,53 @@ export function SheetDetailPage() {
                       </div>
                     </th>
                   )
+                })
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {sheet.categories.map((cat) => (
+              <CatBlock
+                key={cat.sheetCategoryId}
+                cat={cat}
+                vendors={sheet.vendors}
+                isDraft={isDraft}
+                getScore={getScore}
+                getComment={getComment}
+                setScore={setScore}
+                setComment={setComment}
+              />
+            ))}
+            {/* Overall score row — live calculated */}
+            {sheet.vendors.length > 0 && (
+              <tr className="bg-gray-100 font-bold">
+                <td colSpan={2} className="px-3 py-2 text-gray-900 border border-gray-200 text-right text-xs uppercase tracking-wide">
+                  Overall Score
+                </td>
+                {sheet.vendors.map((v) => {
+                  const liveTotal = sheet.categories.reduce((catSum, cat) =>
+                    catSum + cat.parameters.reduce((pSum, param) => {
+                      const s = getScore(v.vendorId, param.sheetParamId)
+                      return pSum + (s !== undefined ? s * param.weightage : 0)
+                    }, 0), 0)
+                  const savedScore = scores?.find((s) => s.vendorId === v.vendorId)
+                  return (
+                    <td
+                      key={v.vendorId}
+                      className={cn(
+                        'px-3 py-2 text-center border border-gray-200',
+                        savedScore?.isWinner ? 'bg-amber-100 text-amber-900' : '',
+                      )}
+                    >
+                      {liveTotal.toFixed(2)}
+                    </td>
+                  )
                 })}
               </tr>
-            </thead>
-            <tbody>
-              {sheet.categories.map((cat) => {
-                return (
-                  <CatBlock
-                    key={cat.sheetCategoryId}
-                    cat={cat}
-                    vendors={sheet.vendors}
-                    isDraft={isDraft}
-                    getScore={getScore}
-                    getComment={getComment}
-                    setScore={setScore}
-                    setComment={setComment}
-                    scores={scores}
-                  />
-                )
-              })}
-              {/* Overall total */}
-              {scores && scores.length > 0 && (
-                <tr className="bg-gray-100 font-bold">
-                  <td colSpan={2} className="px-3 py-2 text-gray-900 border border-gray-200 text-right">
-                    Overall Score
-                  </td>
-                  {sheet.vendors.map((v) => {
-                    const vs = scores?.find((s) => s.vendorId === v.vendorId)
-                    return (
-                      <td
-                        key={v.vendorId}
-                        className={cn(
-                          'px-3 py-2 text-center border border-gray-200',
-                          vs?.isWinner ? 'bg-amber-100 text-amber-900' : '',
-                        )}
-                      >
-                        {vs?.overallScore.toFixed(2) ?? '0.00'}
-                      </td>
-                    )
-                  })}
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* History Section (collapsible) */}
       <div className="mt-8 border-t border-gray-200 pt-4">
@@ -388,7 +401,7 @@ export function SheetDetailPage() {
   )
 }
 
-// ── Category Block (with subtotals) ──────────────────────────────────────
+// ── Category Block (with live subtotals) ─────────────────────────────────
 
 function CatBlock({
   cat,
@@ -398,7 +411,6 @@ function CatBlock({
   getComment,
   setScore,
   setComment,
-  scores,
 }: {
   cat: { sheetCategoryId: number; name: string; parameters: { sheetParamId: number; name: string; weightage: number }[] }
   vendors: { vendorId: number; name: string }[]
@@ -407,14 +419,14 @@ function CatBlock({
   getComment: (vid: number, pid: number) => string
   setScore: (vid: number, pid: number, s: number | undefined) => void
   setComment: (vid: number, pid: number, c: string) => void
-  scores: VendorScoreSummary[] | undefined
 }) {
+  const colSpan = 2 + Math.max(vendors.length, 1)
   return (
     <>
       {/* Category header */}
       <tr>
         <td
-          colSpan={2 + vendors.length}
+          colSpan={colSpan}
           className="px-3 py-2 bg-blue-50 font-semibold text-blue-800 text-xs uppercase tracking-wide border border-gray-200"
         >
           {cat.name}
@@ -433,19 +445,20 @@ function CatBlock({
           setComment={setComment}
         />
       ))}
-      {/* Category subtotal */}
-      {scores && scores.length > 0 && (
+      {/* Category subtotal — live */}
+      {vendors.length > 0 && (
         <tr className="bg-gray-50 font-medium">
-          <td colSpan={2} className="px-3 py-2 text-gray-700 border border-gray-200 text-right text-xs">
+          <td colSpan={2} className="px-3 py-2 text-gray-700 border border-gray-200 text-right text-xs uppercase tracking-wide">
             {cat.name} Subtotal
           </td>
           {vendors.map((v) => {
-            const vCat = scores
-              .find((s) => s.vendorId === v.vendorId)
-              ?.categoryScores.find((c) => c.sheetCategoryId === cat.sheetCategoryId)
+            const subtotal = cat.parameters.reduce((sum, param) => {
+              const s = getScore(v.vendorId, param.sheetParamId)
+              return sum + (s !== undefined ? s * param.weightage : 0)
+            }, 0)
             return (
-              <td key={v.vendorId} className="px-3 py-2 text-center border border-gray-200 text-xs">
-                {vCat?.subTotal.toFixed(2) ?? '0.00'}
+              <td key={v.vendorId} className="px-3 py-2 text-center border border-gray-200 text-xs font-semibold">
+                {subtotal.toFixed(2)}
               </td>
             )
           })}
@@ -455,7 +468,7 @@ function CatBlock({
   )
 }
 
-// ── Parameter Row (score + comment) ──────────────────────────────────────
+// ── Parameter Row (comment always visible, then score) ───────────────────
 
 function ParamRow({
   param,
@@ -474,63 +487,53 @@ function ParamRow({
   setScore: (vid: number, pid: number, s: number | undefined) => void
   setComment: (vid: number, pid: number, c: string) => void
 }) {
-  const [expandedComment, setExpandedComment] = useState<string | null>(null)
-
   return (
-    <tr className="hover:bg-gray-50">
+    <tr className="hover:bg-gray-50 align-top">
       <td className="px-3 py-2 text-gray-700 border border-gray-200">{param.name}</td>
-      <td className="px-3 py-2 text-center text-gray-500 border border-gray-200">{param.weightage}%</td>
-      {vendors.map((v) => {
-        const score = getScore(v.vendorId, param.sheetParamId)
-        const comment = getComment(v.vendorId, param.sheetParamId)
-        const result = score !== undefined ? score * param.weightage : 0
-        const evalKey = `${v.vendorId}-${param.sheetParamId}`
-        const isCommentOpen = expandedComment === evalKey
+      <td className="px-3 py-2 text-center text-gray-500 border border-gray-200 whitespace-nowrap">{param.weightage}%</td>
+      {vendors.length === 0 ? (
+        <td className="border border-gray-200 bg-gray-800/5" />
+      ) : (
+        vendors.map((v) => {
+          const score = getScore(v.vendorId, param.sheetParamId)
+          const comment = getComment(v.vendorId, param.sheetParamId)
+          const result = score !== undefined ? score * param.weightage : 0
 
-        return (
-          <td key={v.vendorId} className="px-2 py-1.5 border border-gray-200">
-            <div className="space-y-1">
-              <div className="flex items-center gap-1">
-                <select
-                  value={score ?? ''}
-                  onChange={(e) =>
-                    setScore(v.vendorId, param.sheetParamId,
-                      e.target.value === '' ? undefined : Number(e.target.value))
-                  }
-                  disabled={!isDraft}
-                  className="w-14 px-1 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
-                >
-                  <option value="">-</option>
-                  {SCORE_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-                <span className="text-xs text-gray-400 w-10 text-right">={result.toFixed(0)}</span>
-                <button
-                  onClick={() => setExpandedComment(isCommentOpen ? null : evalKey)}
-                  className={cn(
-                    'p-0.5 rounded transition-colors',
-                    comment ? 'text-blue-500 hover:text-blue-700' : 'text-gray-300 hover:text-gray-500',
-                  )}
-                  title="Comment / Remarks"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              {isCommentOpen && (
-                <input
-                  type="text"
+          return (
+            <td key={v.vendorId} className="px-2 py-2 border border-gray-200">
+              <div className="flex flex-col gap-1.5">
+                {/* Comment textarea — always visible */}
+                <textarea
                   value={comment}
                   onChange={(e) => setComment(v.vendorId, param.sheetParamId, e.target.value)}
                   disabled={!isDraft}
                   placeholder="Remarks..."
-                  className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
+                  rows={2}
+                  className="w-full px-2 py-1 border border-gray-200 rounded text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-500"
                 />
-              )}
-            </div>
-          </td>
-        )
-      })}
+                {/* Score row */}
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={score ?? ''}
+                    onChange={(e) =>
+                      setScore(v.vendorId, param.sheetParamId,
+                        e.target.value === '' ? undefined : Number(e.target.value))
+                    }
+                    disabled={!isDraft}
+                    className="w-14 px-1 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
+                  >
+                    <option value="">-</option>
+                    {SCORE_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <span className="text-xs text-gray-400">= {result.toFixed(0)}</span>
+                </div>
+              </div>
+            </td>
+          )
+        })
+      )}
     </tr>
   )
 }
@@ -650,14 +653,15 @@ function HistorySection({ sheetId }: { sheetId: number }) {
   if (loading || !logs.length) return null
 
   return (
-    <div className="mt-3 space-y-2 max-w-2xl">
+    <div className="mt-3 max-w-2xl divide-y divide-gray-100">
       {logs.map((log) => (
-        <div key={log.logId} className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg">
-          <History className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+        <div key={log.logId} className="flex items-start gap-4 py-2.5 pl-3 border-l-2 border-blue-200">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-900">{log.action}</span>
-              <span className="text-xs text-gray-400">{new Date(log.changedAt).toLocaleString()}</span>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-medium text-gray-800">{log.action}</span>
+              <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
+                {new Date(log.changedAt).toLocaleString()}
+              </span>
             </div>
             {log.summary && <p className="text-xs text-gray-500 mt-0.5">{log.summary}</p>}
             <span className="text-xs text-gray-400">{log.changedByName}</span>
