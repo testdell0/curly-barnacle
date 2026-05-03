@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, Search, Loader2, RotateCcw, Power, PowerOff, Trash2 } from 'lucide-react'
+import { UserPlus, Search, Loader2, RotateCcw, Power, PowerOff, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useUsers, useCreateUser, useToggleUserActive, useResetPassword, useDeleteUser } from '@/hooks/useUsers'
@@ -290,6 +290,7 @@ export function ManageUsersPage() {
   const [search, setSearch] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [resetTarget, setResetTarget] = useState<UserListItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<UserListItem | null>(null)
 
   function handleToggleActive(u: UserListItem) {
     toggleActive.mutate(u.userId, {
@@ -298,8 +299,10 @@ export function ManageUsersPage() {
     })
   }
 
-  function handleDeleteUser(u: UserListItem) {
-    if (!confirm(`Delete user "${u.fullName}"? This cannot be undone.`)) return
+  function confirmDeleteUser() {
+    if (!deleteTarget) return
+    const u = deleteTarget
+    setDeleteTarget(null)
     deleteUser.mutate(u.userId, {
       onSuccess: () => toast.success(`User "${u.fullName}" deleted.`),
       onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to delete user.'),
@@ -425,7 +428,7 @@ export function ManageUsersPage() {
                       {/* Delete (not self) */}
                       {u.userId !== currentUser?.userId && (
                         <button
-                          onClick={() => handleDeleteUser(u)}
+                          onClick={() => setDeleteTarget(u)}
                           disabled={deleteUser.isPending}
                           title="Delete user"
                           className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
@@ -445,6 +448,59 @@ export function ManageUsersPage() {
       {/* Modals */}
       {showAddModal && <AddUserModal onClose={() => setShowAddModal(false)} />}
       {resetTarget && <ResetPasswordModal user={resetTarget} onClose={() => setResetTarget(null)} />}
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          name={deleteTarget.fullName}
+          onConfirm={confirmDeleteUser}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
+  )
+}
+
+// ── Confirm Delete Modal ──────────────────────────────────────────────────
+
+function ConfirmDeleteModal({
+  name,
+  onConfirm,
+  onCancel,
+}: {
+  name: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/30 z-40" onClick={onCancel} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Delete User</h3>
+            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete <span className="font-medium text-gray-900">"{name}"</span>?
+            This cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }

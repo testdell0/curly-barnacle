@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Pencil, Trash2, Globe, GlobeLock } from 'lucide-react'
+import { Plus, Pencil, Trash2, Globe, GlobeLock, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   useTemplates,
@@ -16,6 +16,7 @@ export function TemplatesPage() {
   const publishTemplate = usePublishTemplate()
   const unpublishTemplate = useUnpublishTemplate()
   const [search, setSearch] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null)
 
   const filtered = templates?.filter(
     (t) =>
@@ -23,17 +24,13 @@ export function TemplatesPage() {
       t.daType.toLowerCase().includes(search.toLowerCase()),
   )
 
-  function handleDelete(id: number, name: string) {
-    if (!confirm(`Delete template "${name}"? This cannot be undone.`)) return
-
+  function confirmDelete() {
+    if (!deleteTarget) return
+    const { id, name } = deleteTarget
+    setDeleteTarget(null)
     deleteTemplate.mutate(id, {
-      onSuccess: () => {
-        // toast.error(`"${name}" deleted`)
-        toast.error('Template Deleted')
-      },
-      onError: () => {
-        toast.error('Failed to delete template')
-      },
+      onSuccess: () => toast.error('Template Deleted'),
+      onError: () => toast.error('Failed to delete template'),
     })
   }
 
@@ -147,7 +144,7 @@ export function TemplatesPage() {
                         </button>
                       )}
                       <button
-                        onClick={() => handleDelete(t.templateId, t.name)}
+                        onClick={() => setDeleteTarget({ id: t.templateId, name: t.name })}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                         title="Delete"
                       >
@@ -161,6 +158,61 @@ export function TemplatesPage() {
           </table>
         </div>
       )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          name={deleteTarget.name}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
+  )
+}
+
+// ── Confirm Delete Modal ──────────────────────────────────────────────────
+
+function ConfirmDeleteModal({
+  name,
+  onConfirm,
+  onCancel,
+}: {
+  name: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/30 z-40" onClick={onCancel} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Delete Template</h3>
+            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete <span className="font-medium text-gray-900">"{name}"</span>?
+            This cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
