@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Fragment } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -285,23 +285,40 @@ export function SheetDetailPage() {
             <col style={{ width: '15%' }} />
             <col style={{ width: '5%' }} />
             {sheet.vendors.length === 0 ? (
-              <col style={{ width: '80%' }} />
+              <>
+                <col style={{ width: '56%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '12%' }} />
+              </>
             ) : (
               sheet.vendors.map((v) => (
-                <col key={v.vendorId} style={{ width: `${80 / sheet.vendors.length}%` }} />
+                <Fragment key={v.vendorId}>
+                  <col style={{ width: `${56 / sheet.vendors.length}%` }} />
+                  <col style={{ width: `${12 / sheet.vendors.length}%` }} />
+                  <col style={{ width: `${12 / sheet.vendors.length}%` }} />
+                </Fragment>
               ))
             )}
           </colgroup>
           <thead>
             <tr className="bg-gray-50">
-              <th className="text-left px-3 py-2 font-medium text-gray-600 border border-gray-200">
+              <th
+                rowSpan={sheet.vendors.length > 0 ? 2 : undefined}
+                className="text-left px-3 py-2 font-medium text-gray-600 border border-gray-200"
+              >
                 Parameter
               </th>
-              <th className="text-center px-3 py-2 font-medium text-gray-600 border border-gray-200">
+              <th
+                rowSpan={sheet.vendors.length > 0 ? 2 : undefined}
+                className="text-center px-3 py-2 font-medium text-gray-600 border border-gray-200"
+              >
                 Wt.
               </th>
               {sheet.vendors.length === 0 ? (
-                <th className="border border-gray-200 bg-white text-gray-400 px-4 py-3 text-center text-sm font-normal italic">
+                <th
+                  colSpan={3}
+                  className="border border-gray-200 bg-white text-gray-400 px-4 py-3 text-center text-sm font-normal italic"
+                >
                   Add a vendor to evaluate
                 </th>
               ) : (
@@ -310,6 +327,7 @@ export function SheetDetailPage() {
                   return (
                     <th
                       key={v.vendorId}
+                      colSpan={3}
                       className={cn(
                         'text-center px-3 py-2 font-medium border border-gray-200',
                         vendorScore?.isWinner ? 'bg-amber-50 text-amber-800' : 'text-gray-600',
@@ -332,6 +350,23 @@ export function SheetDetailPage() {
                 })
               )}
             </tr>
+            {sheet.vendors.length > 0 && (
+              <tr className="bg-gray-50">
+                {sheet.vendors.map((v) => (
+                  <Fragment key={v.vendorId}>
+                    <th className="text-center px-2 py-1 text-xs font-normal text-gray-400 border border-gray-200 italic">
+                      Comment
+                    </th>
+                    <th className="text-center px-2 py-1 text-xs font-normal text-gray-400 border border-gray-200 italic">
+                      Eval
+                    </th>
+                    <th className="text-center px-2 py-1 text-xs font-normal text-gray-400 border border-gray-200 italic">
+                      Result
+                    </th>
+                  </Fragment>
+                ))}
+              </tr>
+            )}
           </thead>
           <tbody>
             {sheet.categories.map((cat) => (
@@ -360,15 +395,17 @@ export function SheetDetailPage() {
                     }, 0), 0)
                   const savedScore = scores?.find((s) => s.vendorId === v.vendorId)
                   return (
-                    <td
-                      key={v.vendorId}
-                      className={cn(
-                        'px-3 py-2 text-center border border-gray-200',
-                        savedScore?.isWinner ? 'bg-amber-100 text-amber-900' : '',
-                      )}
-                    >
-                      {liveTotal.toFixed(2)}
-                    </td>
+                    <Fragment key={v.vendorId}>
+                      <td colSpan={2} className="border border-gray-200 bg-gray-100" />
+                      <td
+                        className={cn(
+                          'px-3 py-2 text-center border border-gray-200',
+                          savedScore?.isWinner ? 'bg-amber-100 text-amber-900' : '',
+                        )}
+                      >
+                        {liveTotal.toFixed(2)}
+                      </td>
+                    </Fragment>
                   )
                 })}
               </tr>
@@ -435,7 +472,7 @@ function CatBlock({
   setScore: (vid: number, pid: number, s: number | undefined) => void
   setComment: (vid: number, pid: number, c: string) => void
 }) {
-  const colSpan = 2 + Math.max(vendors.length, 1)
+  const colSpan = vendors.length === 0 ? 5 : 2 + vendors.length * 3
   return (
     <>
       {/* Category header */}
@@ -472,9 +509,12 @@ function CatBlock({
               return sum + (s !== undefined ? s * param.weightage : 0)
             }, 0)
             return (
-              <td key={v.vendorId} className="px-3 py-2 text-center border border-gray-200 text-xs font-semibold">
-                {subtotal.toFixed(2)}
-              </td>
+              <Fragment key={v.vendorId}>
+                <td colSpan={2} className="border border-gray-200 bg-gray-50" />
+                <td className="px-3 py-2 text-center border border-gray-200 text-xs font-semibold">
+                  {subtotal.toFixed(2)}
+                </td>
+              </Fragment>
             )
           })}
         </tr>
@@ -507,26 +547,28 @@ function ParamRow({
       <td className="px-3 py-2 text-gray-700 border border-gray-200">{param.name}</td>
       <td className="px-3 py-2 text-center text-gray-500 border border-gray-200 whitespace-nowrap">{param.weightage}%</td>
       {vendors.length === 0 ? (
-        <td className="border border-gray-200 bg-white" />
+        <td colSpan={3} className="border border-gray-200 bg-white" />
       ) : (
         vendors.map((v) => {
           const score = getScore(v.vendorId, param.sheetParamId)
           const comment = getComment(v.vendorId, param.sheetParamId)
-          const result = score !== undefined ? score * param.weightage : 0
+          const result = score !== undefined ? score * param.weightage : undefined
 
           return (
-            <td key={v.vendorId} className="px-2 py-2 border border-gray-200">
-              <div className="flex items-start gap-1.5">
-                {/* Comment textarea — always visible, fills available width */}
+            <Fragment key={v.vendorId}>
+              {/* Comment */}
+              <td className="px-2 py-2 border border-gray-200">
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(v.vendorId, param.sheetParamId, e.target.value)}
                   disabled={!isDraft}
                   placeholder="Remarks..."
                   rows={2}
-                  className="flex-1 min-w-0 px-2 py-1 border border-gray-200 rounded text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="w-full px-2 py-1 border border-gray-200 rounded text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-500"
                 />
-                {/* Score dropdown */}
+              </td>
+              {/* Eval */}
+              <td className="px-2 py-2 border border-gray-200 align-middle">
                 <select
                   value={score ?? ''}
                   onChange={(e) =>
@@ -534,15 +576,19 @@ function ParamRow({
                       e.target.value === '' ? undefined : Number(e.target.value))
                   }
                   disabled={!isDraft}
-                  className="w-14 flex-shrink-0 px-1 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
+                  className="w-full px-1 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
                 >
                   <option value="">-</option>
                   {SCORE_OPTIONS.map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
-              </div>
-            </td>
+              </td>
+              {/* Result */}
+              <td className="px-2 py-2 border border-gray-200 text-center text-xs font-medium text-gray-700">
+                {result !== undefined ? result.toFixed(0) : ''}
+              </td>
+            </Fragment>
           )
         })
       )}

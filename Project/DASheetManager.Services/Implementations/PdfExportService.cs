@@ -34,129 +34,146 @@ public class PdfExportService : IPdfExportService
                 page.Margin(20);
                 page.DefaultTextStyle(x => x.FontSize(8));
 
-                // Header
-                page.Header().Row(row =>
+                page.Header().PaddingBottom(8).Row(row =>
                 {
                     row.RelativeItem().Column(col =>
                     {
                         col.Item().Text(sheet.Name).Bold().FontSize(14);
-                        col.Item().Text($"DA Type: {sheet.DaType}").FontSize(9);
+                        col.Item().Text($"Template: {sheet.SourceTemplateName}")
+                            .FontSize(9).FontColor("#2563EB");
                     });
                     row.RelativeItem().AlignRight().Column(col =>
                     {
                         col.Item().Text($"Created By: {sheet.CreatedByName}").FontSize(9);
-                        col.Item().Text($"Date: {sheet.CreatedAt:dd-MMM-yyyy}").FontSize(9);
-                        col.Item().Text($"Status: {sheet.Status}").FontSize(9);
+                        col.Item().Text($"Created: {sheet.CreatedAt:dd-MMM-yyyy}").FontSize(9);
                     });
                 });
 
-                // Content
-                page.Content().PaddingVertical(10).Column(content =>
+                page.Content().PaddingVertical(4).Column(content =>
                 {
-                    if (!scores.Any() || !sheet.Categories.Any()) return;
+                    if (!sheet.Categories.Any()) return;
 
-                    foreach (var category in sheet.Categories)
-                    {
-                        content.Item().PaddingBottom(8).Column(catCol =>
-                        {
-                            catCol.Item().Background("#4F46E5").Padding(4)
-                                .Text($"  {category.Name}").FontColor("#FFFFFF").Bold().FontSize(9);
-
-                            catCol.Item().Table(table =>
-                            {
-                                // Define columns: Param Name | Weightage | (Score | Result) per vendor
-                                table.ColumnsDefinition(cols =>
-                                {
-                                    cols.RelativeColumn(3); // Param name
-                                    cols.RelativeColumn(1); // Weightage
-                                    foreach (var _ in scores)
-                                    {
-                                        cols.RelativeColumn(1); // Score
-                                        cols.RelativeColumn(1); // Result
-                                    }
-                                });
-
-                                // Header row
-                                table.Header(header =>
-                                {
-                                    header.Cell().Border(0.5f).Padding(3).Text("Judgement Parameter").Bold();
-                                    header.Cell().Border(0.5f).Padding(3).Text("Wt%").Bold();
-                                    foreach (var vendor in scores)
-                                    {
-                                        header.Cell().ColumnSpan(2).Border(0.5f).Padding(3)
-                                            .Text(vendor.VendorName + (vendor.IsWinner ? " ★" : "")).Bold();
-                                    }
-
-                                    // Sub-header for Score/Result
-                                    header.Cell().Border(0.5f).Padding(2).Text("");
-                                    header.Cell().Border(0.5f).Padding(2).Text("");
-                                    foreach (var _ in scores)
-                                    {
-                                        header.Cell().Border(0.5f).Padding(2).Text("Score").FontSize(7);
-                                        header.Cell().Border(0.5f).Padding(2).Text("Result").FontSize(7);
-                                    }
-                                });
-
-                                // Param rows
-                                foreach (var param in category.Parameters)
-                                {
-                                    table.Cell().Border(0.5f).Padding(3).Text(param.Name);
-                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text($"{param.Weightage}%");
-
-                                    foreach (var vendor in scores)
-                                    {
-                                        var catScore = vendor.CategoryScores.FirstOrDefault(c => c.SheetCategoryId == category.SheetCategoryId);
-                                        var paramScore = catScore?.ParamScores.FirstOrDefault(p => p.SheetParamId == param.SheetParamId);
-
-                                        table.Cell().Border(0.5f).Padding(3).AlignCenter()
-                                            .Text(paramScore?.EvalScore?.ToString() ?? "-");
-                                        table.Cell().Border(0.5f).Padding(3).AlignCenter()
-                                            .Text(paramScore?.Result.ToString("F0") ?? "-");
-                                    }
-                                }
-
-                                // Subtotal row
-                                table.Cell().ColumnSpan(2).Border(0.5f).Padding(3).Background("#F3F4F6")
-                                    .Text("Sub Total").Bold();
-                                foreach (var vendor in scores)
-                                {
-                                    var catScore = vendor.CategoryScores.FirstOrDefault(c => c.SheetCategoryId == category.SheetCategoryId);
-                                    table.Cell().ColumnSpan(2).Border(0.5f).Padding(3).Background("#F3F4F6")
-                                        .AlignCenter().Text(catScore?.SubTotal.ToString("F0") ?? "0").Bold();
-                                }
-                            });
-                        });
-                    }
-
-                    // Overall Scores
-                    content.Item().PaddingTop(10).Table(table =>
+                    content.Item().Table(table =>
                     {
                         table.ColumnsDefinition(cols =>
                         {
-                            cols.RelativeColumn(2);
+                            cols.ConstantColumn(55);   // Model Item
+                            cols.RelativeColumn(3);    // Judgement Parameter
+                            cols.ConstantColumn(25);   // Weight
                             foreach (var _ in scores)
-                                cols.RelativeColumn(1);
+                            {
+                                cols.RelativeColumn(4);   // Comment
+                                cols.ConstantColumn(20);  // Eval
+                                cols.ConstantColumn(28);  // Result
+                            }
                         });
 
                         table.Header(header =>
                         {
-                            header.Cell().Border(0.5f).Padding(4).Background("#4F46E5")
-                                .Text("Overall Scores").FontColor("#FFFFFF").Bold().FontSize(10);
+                            // Row 1 — first 3 columns span both rows; vendor names span 3 sub-cols each
+                            header.Cell().RowSpan(2).Border(0.5f).Padding(3).Background("#E8EAED")
+                                .AlignCenter().AlignMiddle().Text("Model Item").Bold().FontSize(7);
+                            header.Cell().RowSpan(2).Border(0.5f).Padding(3).Background("#E8EAED")
+                                .AlignMiddle().Text("Judgement Parameter").Bold().FontSize(7);
+                            header.Cell().RowSpan(2).Border(0.5f).Padding(3).Background("#E8EAED")
+                                .AlignCenter().AlignMiddle().Text("Weight").Bold().FontSize(7);
                             foreach (var vendor in scores)
                             {
-                                header.Cell().Border(0.5f).Padding(4).Background(vendor.IsWinner ? "#FEF3C7" : "#F3F4F6")
-                                    .AlignCenter()
-                                    .Text($"{vendor.VendorName}: {vendor.OverallScore:F0}" + (vendor.IsWinner ? " ★ WINNER" : ""))
-                                    .Bold().FontSize(10);
+                                var bg = vendor.IsWinner ? "#FEF3C7" : "#E8EAED";
+                                var label = vendor.VendorName + (vendor.IsWinner ? " ★" : "");
+                                header.Cell().ColumnSpan(3).Border(0.5f).Padding(3).Background(bg)
+                                    .AlignCenter().Text(label).Bold().FontSize(7);
+                            }
+
+                            // Row 2 — Comment / Eval / Result sub-headers per vendor
+                            foreach (var _ in scores)
+                            {
+                                header.Cell().Border(0.5f).Padding(2).Background("#E8EAED")
+                                    .AlignCenter().Text("Comment").Italic().FontSize(6);
+                                header.Cell().Border(0.5f).Padding(2).Background("#E8EAED")
+                                    .AlignCenter().Text("Eval").Italic().FontSize(6);
+                                header.Cell().Border(0.5f).Padding(2).Background("#E8EAED")
+                                    .AlignCenter().Text("Result").Italic().FontSize(6);
                             }
                         });
+
+                        // Body — one unified table for all categories
+                        foreach (var category in sheet.Categories)
+                        {
+                            var parameters = category.Parameters.ToList();
+                            var paramCount = parameters.Count;
+                            var isFirst = true;
+
+                            foreach (var param in parameters)
+                            {
+                                if (isFirst)
+                                {
+                                    // Category cell spans all param rows + the sub-total row
+                                    table.Cell().RowSpan((uint)(paramCount + 1))
+                                        .Border(0.5f).Padding(3).Background("#DBEAFE")
+                                        .AlignCenter().AlignMiddle()
+                                        .Text(category.Name).Bold().FontSize(7);
+                                    isFirst = false;
+                                }
+
+                                table.Cell().Border(0.5f).Padding(3)
+                                    .Text(param.Name).FontSize(7);
+                                table.Cell().Border(0.5f).Padding(3).AlignCenter()
+                                    .Text($"{param.Weightage}%").FontSize(7);
+
+                                foreach (var vendor in scores)
+                                {
+                                    var catScore = vendor.CategoryScores
+                                        .FirstOrDefault(c => c.SheetCategoryId == category.SheetCategoryId);
+                                    var ps = catScore?.ParamScores
+                                        .FirstOrDefault(p => p.SheetParamId == param.SheetParamId);
+
+                                    table.Cell().Border(0.5f).Padding(2)
+                                        .Text(ps?.VendorComment ?? "").FontSize(6);
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter()
+                                        .Text(ps?.EvalScore?.ToString() ?? "-").FontSize(7);
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter()
+                                        .Text(ps?.Result > 0 ? ps.Result.ToString("F0") : "-").FontSize(7);
+                                }
+                            }
+
+                            // Sub-total row — first column still covered by RowSpan
+                            table.Cell().ColumnSpan(2).Border(0.5f).Padding(3).Background("#F3F4F6")
+                                .AlignRight().Text("Sub-total").Bold().FontSize(7);
+                            foreach (var vendor in scores)
+                            {
+                                var catScore = vendor.CategoryScores
+                                    .FirstOrDefault(c => c.SheetCategoryId == category.SheetCategoryId);
+                                table.Cell().Border(0.5f).Background("#F3F4F6").Text("").FontSize(7);
+                                table.Cell().Border(0.5f).Background("#F3F4F6").Text("").FontSize(7);
+                                table.Cell().Border(0.5f).Padding(3).Background("#F3F4F6").AlignCenter()
+                                    .Text(catScore?.SubTotal.ToString("F0") ?? "0").Bold().FontSize(7);
+                            }
+                        }
+
+                        // Grand Total row
+                        table.Cell().ColumnSpan(3).Border(0.5f).Padding(4).Background("#1E3A5F")
+                            .AlignCenter().Text("Grand Total").Bold().FontSize(8).FontColor("#FFFFFF");
+                        foreach (var vendor in scores)
+                        {
+                            var highlight = vendor.IsWinner ? "#FEF3C7" : "#EFF6FF";
+                            table.Cell().Border(0.5f).Background("#EFF6FF").Text("").FontSize(7);
+                            table.Cell().Border(0.5f).Background("#EFF6FF").Text("").FontSize(7);
+                            table.Cell().Border(0.5f).Padding(4).Background(highlight).AlignCenter()
+                                .Text(vendor.OverallScore.ToString("F0") + (vendor.IsWinner ? " ★" : ""))
+                                .Bold().FontSize(8);
+                        }
                     });
                 });
 
                 page.Footer().AlignCenter().Text(text =>
                 {
-                    text.Span("DA Sheet Manager | Generated on ");
+                    text.Span("DA Sheet Manager  |  Generated: ");
                     text.Span(DateTime.Now.ToString("dd-MMM-yyyy HH:mm"));
+                    text.Span("  |  Page ");
+                    text.CurrentPageNumber();
+                    text.Span(" of ");
+                    text.TotalPages();
                 });
             });
         });
