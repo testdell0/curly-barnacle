@@ -16,7 +16,6 @@ public class OracleDbContext : DbContext
     public DbSet<DaSheetJudgmentParam> SheetJudgmentParams => Set<DaSheetJudgmentParam>();
     public DbSet<DaVendor> Vendors => Set<DaVendor>();
     public DbSet<DaVendorEvaluation> VendorEvaluations => Set<DaVendorEvaluation>();
-    public DbSet<DaEvalFile> EvalFiles => Set<DaEvalFile>();
     public DbSet<DaSharedAccess> SharedAccess => Set<DaSharedAccess>();
     public DbSet<DaAuditLog> AuditLogs => Set<DaAuditLog>();
 

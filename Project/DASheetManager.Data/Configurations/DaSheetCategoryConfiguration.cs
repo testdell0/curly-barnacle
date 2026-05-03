@@ -15,7 +15,7 @@ public class DaSheetCategoryConfiguration : IEntityTypeConfiguration<DaSheetCate
         builder.Property(e => e.SheetId).HasColumnName("SHEET_ID").IsRequired();
         builder.Property(e => e.SourceCategoryId).HasColumnName("SOURCE_CATEGORY_ID");
         builder.Property(e => e.Name).HasColumnName("NAME").HasMaxLength(200).IsRequired();
-        builder.Property(e => e.SortOrder).HasColumnName("SORT_ORDER").HasDefaultValue(0).IsRequired();
+        builder.Property(e => e.SortOrder).HasColumnName("SORT_ORDER").IsRequired();
 
         builder.HasMany(e => e.Parameters).WithOne(p => p.Category).HasForeignKey(p => p.SheetCategoryId).OnDelete(DeleteBehavior.Cascade);
 

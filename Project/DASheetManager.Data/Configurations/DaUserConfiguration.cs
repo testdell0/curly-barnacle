@@ -13,7 +13,9 @@ public class DaUserConfiguration : IEntityTypeConfiguration<DaUser>
 
         builder.Property(e => e.UserId).HasColumnName("USER_ID").UseHiLo("SEQ_DA_USERS");
         builder.Property(e => e.EmployeeCode).HasColumnName("EMPLOYEE_CODE").HasMaxLength(50).IsRequired();
-        builder.Property(e => e.FullName).HasColumnName("FULL_NAME").HasMaxLength(200).IsRequired();
+        builder.Property(e => e.FirstName).HasColumnName("FIRST_NAME").HasMaxLength(100).IsRequired();
+        builder.Property(e => e.LastName).HasColumnName("LAST_NAME").HasMaxLength(100).IsRequired();
+        builder.Ignore(e => e.FullName);
         builder.Property(e => e.Email).HasColumnName("EMAIL").HasMaxLength(255).IsRequired();
         builder.Property(e => e.PasswordHash).HasColumnName("PASSWORD_HASH").HasMaxLength(500);
         builder.Property(e => e.MustChangePassword).HasColumnName("MUST_CHANGE_PASSWORD").HasDefaultValue(false).IsRequired();

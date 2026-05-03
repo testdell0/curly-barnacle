@@ -82,10 +82,12 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
+            var parts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
             user = new DaUser
             {
                 EmployeeCode = employeeCode.Trim().ToUpper(),
-                FullName = fullName.Trim(),
+                FirstName = parts.Length > 0 ? parts[0] : fullName.Trim(),
+                LastName  = parts.Length > 1 ? parts[1] : string.Empty,
                 Email = email.Trim(),
                 Role = "User",    // default; admin can promote via Manage Users
                 IsActive = true
@@ -135,7 +137,7 @@ public class AuthService : IAuthService
 
     public async Task<List<UserListDto>> GetAllUsersAsync()
     {
-        var users = await _uow.Users.Query().OrderBy(u => u.FullName).ToListAsync();
+        var users = await _uow.Users.Query().OrderBy(u => u.LastName).ThenBy(u => u.FirstName).ToListAsync();
         return users.Select(MapToListDto).ToList();
     }
 
@@ -148,7 +150,8 @@ public class AuthService : IAuthService
         var user = new DaUser
         {
             EmployeeCode = request.EmployeeCode.Trim().ToUpper(),
-            FullName = request.FullName.Trim(),
+            FirstName = request.FirstName.Trim(),
+            LastName  = request.LastName.Trim(),
             Email = request.Email.Trim(),
             Role = request.Role == "Admin" ? "Admin" : "User",
             PasswordHash = HashPassword(request.TempPassword),
@@ -239,7 +242,8 @@ public class AuthService : IAuthService
     {
         UserId = u.UserId,
         EmployeeCode = u.EmployeeCode,
-        FullName = u.FullName,
+        FirstName = u.FirstName,
+        LastName  = u.LastName,
         Email = u.Email,
         Role = u.Role,
         IsActive = u.IsActive,

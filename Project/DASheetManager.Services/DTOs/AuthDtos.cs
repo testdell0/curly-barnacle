@@ -41,7 +41,9 @@ public class UserListDto
 {
     public int UserId { get; set; }
     public string EmployeeCode { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string FullName => $"{FirstName} {LastName}".Trim();
     public string Email { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public bool IsActive { get; set; }
@@ -52,7 +54,8 @@ public class UserListDto
 public class CreateUserRequest
 {
     public string EmployeeCode { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Role { get; set; } = "User";
     public string TempPassword { get; set; } = string.Empty;

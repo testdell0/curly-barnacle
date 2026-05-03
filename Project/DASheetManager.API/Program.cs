@@ -46,7 +46,6 @@ builder.Services.AddScoped<ITemplateService, TemplateService>();
 builder.Services.AddScoped<IDASheetService, DASheetService>();
 builder.Services.AddScoped<IVendorEvaluationService, VendorEvaluationService>();
 builder.Services.AddScoped<IShareService, ShareService>();
-builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IPdfExportService, PdfExportService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 

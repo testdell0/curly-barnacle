@@ -36,10 +36,11 @@ public class UserController : ControllerBase
         if (!IsAdmin()) return Forbid();
 
         if (string.IsNullOrWhiteSpace(request.EmployeeCode) ||
-            string.IsNullOrWhiteSpace(request.FullName) ||
+            string.IsNullOrWhiteSpace(request.FirstName) ||
+            string.IsNullOrWhiteSpace(request.LastName) ||
             string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.TempPassword))
-            return BadRequest(new { error = "EmployeeCode, FullName, Email, and TempPassword are required." });
+            return BadRequest(new { error = "EmployeeCode, FirstName, LastName, Email, and TempPassword are required." });
 
         if (request.TempPassword.Length < 6)
             return BadRequest(new { error = "Temporary password must be at least 6 characters." });

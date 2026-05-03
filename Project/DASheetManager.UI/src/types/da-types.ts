@@ -25,6 +25,8 @@ export interface ChangePasswordRequest {
 export interface UserListItem {
   userId: number
   employeeCode: string
+  firstName: string
+  lastName: string
   fullName: string
   email: string
   role: 'Admin' | 'User'
@@ -35,7 +37,8 @@ export interface UserListItem {
 
 export interface CreateUserRequest {
   employeeCode: string
-  fullName: string
+  firstName: string
+  lastName: string
   email: string
   role: 'Admin' | 'User'
   tempPassword: string
@@ -293,18 +296,6 @@ export interface CreateShareRequest {
 
 export interface UpdateShareRequest {
   accessLevel: 'view' | 'edit'
-}
-
-// ── Files ─────────────────────────────────────────────────────────────────
-
-export interface FileDto {
-  fileId: number
-  evalId: number
-  originalFilename: string
-  contentType: string
-  fileSizeBytes: number
-  uploadedBy: number
-  uploadedAt: string
 }
 
 // ── History / Audit ───────────────────────────────────────────────────────
