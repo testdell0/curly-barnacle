@@ -109,7 +109,7 @@ public class PdfExportService : IPdfExportService
                                 if (isFirst)
                                 {
                                     // Category cell spans all param rows + the sub-total row
-                                    table.Cell().RowSpan(paramCount + 1)
+                                    table.Cell().RowSpan((uint)(paramCount + 1))
                                         .Border(0.5f).Padding(3).Background("#DBEAFE")
                                         .AlignCenter().AlignMiddle()
                                         .Text(category.Name).Bold().FontSize(7);
