@@ -12,4 +12,5 @@ public interface IAuthService
     Task<List<UserListDto>> GetAllUsersAsync();
     Task<UserListDto> CreateUserAsync(CreateUserRequest request);
     Task ToggleUserActiveAsync(int userId);
+    Task DeleteUserAsync(int userId);
 }

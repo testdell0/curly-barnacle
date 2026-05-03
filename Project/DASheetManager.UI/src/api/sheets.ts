@@ -16,6 +16,7 @@ function toQueryString(params: SheetSearchParams): string {
   if (params.status) sp.set('status', params.status)
   sp.set('page', String(params.page ?? 1))
   sp.set('pageSize', String(params.pageSize ?? 10))
+  if (params.sharedOnly) sp.set('sharedOnly', 'true')
   return sp.toString()
 }
 

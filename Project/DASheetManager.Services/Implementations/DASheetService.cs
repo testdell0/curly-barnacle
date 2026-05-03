@@ -34,6 +34,7 @@ public class DASheetService : IDASheetService
     {
         var query = _uow.Sheets.Query()
             .Include(s => s.Creator)
+            .Include(s => s.SourceTemplate)
             .AsQueryable();
 
         // Filter by access: owned or shared
@@ -42,7 +43,10 @@ public class DASheetService : IDASheetService
             .Select(sa => sa.SheetId)
             .ToListAsync();
 
-        query = query.Where(s => s.CreatedBy == userId || sharedSheetIds.Contains(s.SheetId));
+        if (criteria.SharedOnly)
+            query = query.Where(s => sharedSheetIds.Contains(s.SheetId));
+        else
+            query = query.Where(s => s.CreatedBy == userId || sharedSheetIds.Contains(s.SheetId));
 
         if (!string.IsNullOrWhiteSpace(criteria.Search))
         {
@@ -286,7 +290,9 @@ public class DASheetService : IDASheetService
         DaType = s.DaType,
         Status = s.Status,
         Version = s.Version,
+        SourceTemplateName = s.SourceTemplate?.Name ?? "(deleted template)",
         CreatedByName = s.Creator?.FullName ?? "",
+        CreatedBy = s.CreatedBy,
         CreatedAt = s.CreatedAt,
         UpdatedAt = s.UpdatedAt
     };

@@ -7,4 +7,5 @@ export const usersApi = {
   toggleActive: (userId: number) => api.post<{ message: string }>(`/api/users/${userId}/toggle-active`),
   resetPassword: (userId: number, body: AdminResetPasswordRequest) =>
     api.post<{ message: string }>(`/api/users/${userId}/reset-password`, body),
+  deleteUser: (userId: number) => api.delete<{ message: string }>(`/api/users/${userId}`),
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Plus,
@@ -34,6 +34,10 @@ export function SheetDetailPage() {
   const { id } = useParams<{ id: string }>()
   const sheetId = Number(id)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  const isViewOnly = searchParams.get('view') === '1'
+  const autoOpenShare = searchParams.get('share') === '1'
 
   const { data: sheet, isLoading } = useSheet(sheetId)
   const { data: evaluations, refetch: refetchEvaluations } = useEvaluations(sheetId)
@@ -50,6 +54,11 @@ export function SheetDetailPage() {
   const [showShareModal, setShowShareModal] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
+  // Auto-open share modal when navigated with ?share=1
+  useEffect(() => {
+    if (autoOpenShare && sheet) setShowShareModal(true)
+  }, [autoOpenShare, sheet])
+
   // Build a lookup from evaluations
   const evalMap = useMemo(() => {
     const map: Record<string, EvaluationDto> = {}
@@ -59,7 +68,7 @@ export function SheetDetailPage() {
     return map
   }, [evaluations])
 
-  const isDraft = sheet?.status === 'Draft'
+  const isDraft = !isViewOnly && sheet?.status === 'Draft'
   const winner = scores?.find((s) => s.isWinner)
 
   function getScore(vendorId: number, paramId: number): number | undefined {

@@ -1,24 +1,50 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Copy, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Copy, Trash2, Eye, Pencil, Share2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useSheets, useDeleteSheet, useDuplicateSheet } from '@/hooks/useSheets'
+import { useAuthStore } from '@/store/authStore'
 import type { SheetSearchParams } from '@/types/da-types'
+
+type TabType = 'mine' | 'shared'
 
 export function SheetsPage() {
   const navigate = useNavigate()
+  const currentUser = useAuthStore((s) => s.user)
+  const [activeTab, setActiveTab] = useState<TabType>('mine')
   const [params, setParams] = useState<SheetSearchParams>({
     page: 1,
     pageSize: 10,
   })
 
-  const { data, isLoading } = useSheets(params)
+  const queryParams: SheetSearchParams = {
+    ...params,
+    sharedOnly: activeTab === 'shared',
+  }
+
+  const { data, isLoading } = useSheets(queryParams)
   const deleteSheet = useDeleteSheet()
   const duplicateSheet = useDuplicateSheet()
 
+  function handleTabChange(tab: TabType) {
+    setActiveTab(tab)
+    setParams((p) => ({ ...p, page: 1 }))
+  }
+
   function handleDelete(id: number, name: string) {
     if (!confirm(`Delete sheet "${name}"? This cannot be undone.`)) return
-    deleteSheet.mutate(id)
+    deleteSheet.mutate(id, {
+      onSuccess: () => toast.success(`Sheet "${name}" deleted.`),
+      onError: () => toast.error('Failed to delete sheet.'),
+    })
+  }
+
+  function handleDuplicate(id: number, name: string) {
+    duplicateSheet.mutate(id, {
+      onSuccess: () => toast.success(`Sheet "${name}" duplicated.`),
+      onError: () => toast.error('Failed to duplicate sheet.'),
+    })
   }
 
   return (
@@ -29,13 +55,41 @@ export function SheetsPage() {
           <h1 className="text-xl font-semibold text-gray-900">DA Sheets</h1>
           <p className="text-sm text-gray-500 mt-1">Decision analysis sheets for vendor evaluation</p>
         </div>
-        <Link
-          to="/sheets/create"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        {activeTab === 'mine' && (
+          <Link
+            to="/sheets/create"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Create Sheet
+          </Link>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
+        <button
+          onClick={() => handleTabChange('mine')}
+          className={cn(
+            'px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+            activeTab === 'mine'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700',
+          )}
         >
-          <Plus className="w-4 h-4" />
-          Create Sheet
-        </Link>
+          My Sheets
+        </button>
+        <button
+          onClick={() => handleTabChange('shared')}
+          className={cn(
+            'px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+            activeTab === 'shared'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700',
+          )}
+        >
+          Shared with Me
+        </button>
       </div>
 
       {/* Filters */}
@@ -75,7 +129,9 @@ export function SheetsPage() {
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">Loading sheets...</div>
       ) : !data?.items.length ? (
-        <div className="text-center py-12 text-gray-500">No sheets found</div>
+        <div className="text-center py-12 text-gray-500">
+          {activeTab === 'shared' ? 'No sheets have been shared with you.' : 'No sheets found'}
+        </div>
       ) : (
         <>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -92,58 +148,89 @@ export function SheetsPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.items.map((s) => (
-                  <tr
-                    key={s.sheetId}
-                    className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/sheets/${s.sheetId}`)}
-                  >
-                    <td className="px-4 py-3 font-medium text-gray-900">{s.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{s.daType}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                          s.status === 'Final'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-yellow-100 text-yellow-700',
-                        )}
-                      >
-                        {s.status} {s.version > 1 && `v${s.version}`}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{s.sourceTemplateName}</td>
-                    <td className="px-4 py-3 text-gray-600">{s.createdByName}</td>
-                    <td className="px-4 py-3 text-gray-500">
-                      {new Date(s.updatedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => navigate(`/sheets/${s.sheetId}`)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="View"
+                {data.items.map((s) => {
+                  const isOwner = s.createdBy === currentUser?.userId
+                  const isDraft = s.status === 'Draft'
+                  return (
+                    <tr key={s.sheetId} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900">{s.name}</td>
+                      <td className="px-4 py-3 text-gray-600">{s.daType}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                            s.status === 'Final'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-yellow-100 text-yellow-700',
+                          )}
                         >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => duplicateSheet.mutate(s.sheetId)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
-                          title="Duplicate"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(s.sheetId, s.name)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {s.status} {s.version > 1 && `v${s.version}`}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{s.sourceTemplateName}</td>
+                      <td className="px-4 py-3 text-gray-600">{s.createdByName}</td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {new Date(s.updatedAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* View (read-only) */}
+                          <button
+                            onClick={() => navigate(`/sheets/${s.sheetId}?view=1`)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="View (read-only)"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
+                          {/* Edit (only for Draft sheets the user owns) */}
+                          {isOwner && isDraft && (
+                            <button
+                              onClick={() => navigate(`/sheets/${s.sheetId}`)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
+                              title="Edit"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Share */}
+                          {isOwner && (
+                            <button
+                              onClick={() => navigate(`/sheets/${s.sheetId}?share=1`)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                              title="Share"
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Duplicate */}
+                          {isOwner && (
+                            <button
+                              onClick={() => handleDuplicate(s.sheetId, s.name)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+                              title="Duplicate"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Delete */}
+                          {isOwner && (
+                            <button
+                              onClick={() => handleDelete(s.sheetId, s.name)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -56,6 +56,20 @@ public class UserController : ControllerBase
         }
     }
 
+    /// <summary>DELETE /api/users/{id} — delete user (Admin only)</summary>
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        if (!IsAdmin()) return Forbid();
+        try
+        {
+            await _authService.DeleteUserAsync(id);
+            return Ok(new { message = "User deleted." });
+        }
+        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
+    }
+
     /// <summary>POST /api/users/{id}/toggle-active — activate / deactivate (Admin only)</summary>
     [HttpPost("{id:int}/toggle-active")]
     public async Task<IActionResult> ToggleActive(int id)

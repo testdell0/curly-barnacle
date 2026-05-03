@@ -1,4 +1,5 @@
 import { FileText, CheckCircle, LayoutTemplate, Users, TrendingUp, Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useDashboardStats, useRecentSheets } from '@/hooks/useDashboard'
 import { useAuthStore } from '@/store/authStore'
@@ -49,6 +50,7 @@ function StatusBadge({ status }: { status: RecentSheet['status'] }) {
 
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
   const { data: stats, isLoading: statsLoading } = useDashboardStats()
   const { data: recent, isLoading: recentLoading, error: recentError } = useRecentSheets()
 
@@ -155,7 +157,11 @@ export function DashboardPage() {
                   </tr>
                 )}
                 {recent?.map((sheet) => (
-                  <tr key={sheet.sheetId} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={sheet.sheetId}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/sheets/${sheet.sheetId}?view=1`)}
+                  >
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{sheet.name}</div>
                       <div className="text-xs text-gray-400">{sheet.daType} · v{sheet.version}</div>
