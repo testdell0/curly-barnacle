@@ -371,7 +371,7 @@ export function SheetDetailPage() {
         >
           {showHistory ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           <History className="w-4 h-4" />
-          Audit History
+          History
         </button>
         {showHistory && <HistorySection sheetId={sheetId} />}
       </div>
@@ -647,8 +647,7 @@ function HistorySection({ sheetId }: { sheetId: number }) {
     }).catch(() => setLoading(false))
   }, [sheetId])
 
-  if (loading) return <p className="text-sm text-gray-500 mt-3">Loading history...</p>
-  if (!logs.length) return <p className="text-sm text-gray-500 mt-3">No audit entries yet.</p>
+  if (loading || !logs.length) return null
 
   return (
     <div className="mt-3 space-y-2 max-w-2xl">
