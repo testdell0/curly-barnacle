@@ -52,6 +52,7 @@ export function SheetDetailPage() {
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [showShareModal, setShowShareModal] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [removeVendorTarget, setRemoveVendorTarget] = useState<{ vendorId: number; name: string } | null>(null)
 
   // Auto-open share modal when navigated with ?share=1
   useEffect(() => {
@@ -300,7 +301,7 @@ export function SheetDetailPage() {
                 Wt.
               </th>
               {sheet.vendors.length === 0 ? (
-                <th className="border border-gray-200 bg-gray-800 text-white px-4 py-3 text-center text-sm font-normal italic">
+                <th className="border border-gray-200 bg-white text-gray-400 px-4 py-3 text-center text-sm font-normal italic">
                   Add a vendor to evaluate
                 </th>
               ) : (
@@ -319,7 +320,7 @@ export function SheetDetailPage() {
                         {vendorScore?.isWinner && <Trophy className="w-3 h-3 text-amber-500" />}
                         {isDraft && (
                           <button
-                            onClick={() => { if (confirm('Remove this vendor?')) deleteVendor.mutate(v.vendorId) }}
+                            onClick={() => setRemoveVendorTarget({ vendorId: v.vendorId, name: v.name })}
                             className="p-0.5 rounded text-gray-300 hover:text-red-500 transition-colors"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -395,6 +396,20 @@ export function SheetDetailPage() {
           sheetId={sheetId}
           shares={sheet.sharedWith}
           onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {/* Remove Vendor Modal */}
+      {removeVendorTarget && (
+        <ConfirmModal
+          title="Remove Vendor"
+          message={`Remove "${removeVendorTarget.name}" and all their evaluation scores?`}
+          confirmLabel="Remove"
+          onConfirm={() => {
+            deleteVendor.mutate(removeVendorTarget.vendorId)
+            setRemoveVendorTarget(null)
+          }}
+          onCancel={() => setRemoveVendorTarget(null)}
         />
       )}
     </div>
@@ -492,7 +507,7 @@ function ParamRow({
       <td className="px-3 py-2 text-gray-700 border border-gray-200">{param.name}</td>
       <td className="px-3 py-2 text-center text-gray-500 border border-gray-200 whitespace-nowrap">{param.weightage}%</td>
       {vendors.length === 0 ? (
-        <td className="border border-gray-200 bg-gray-800/5" />
+        <td className="border border-gray-200 bg-white" />
       ) : (
         vendors.map((v) => {
           const score = getScore(v.vendorId, param.sheetParamId)
@@ -501,40 +516,84 @@ function ParamRow({
 
           return (
             <td key={v.vendorId} className="px-2 py-2 border border-gray-200">
-              <div className="flex flex-col gap-1.5">
-                {/* Comment textarea — always visible */}
+              <div className="flex items-start gap-1.5">
+                {/* Comment textarea — always visible, fills available width */}
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(v.vendorId, param.sheetParamId, e.target.value)}
                   disabled={!isDraft}
                   placeholder="Remarks..."
                   rows={2}
-                  className="w-full px-2 py-1 border border-gray-200 rounded text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="flex-1 min-w-0 px-2 py-1 border border-gray-200 rounded text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-500"
                 />
-                {/* Score row */}
-                <div className="flex items-center gap-1.5">
-                  <select
-                    value={score ?? ''}
-                    onChange={(e) =>
-                      setScore(v.vendorId, param.sheetParamId,
-                        e.target.value === '' ? undefined : Number(e.target.value))
-                    }
-                    disabled={!isDraft}
-                    className="w-14 px-1 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
-                  >
-                    <option value="">-</option>
-                    {SCORE_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                  <span className="text-xs text-gray-400">= {result.toFixed(0)}</span>
-                </div>
+                {/* Score dropdown */}
+                <select
+                  value={score ?? ''}
+                  onChange={(e) =>
+                    setScore(v.vendorId, param.sheetParamId,
+                      e.target.value === '' ? undefined : Number(e.target.value))
+                  }
+                  disabled={!isDraft}
+                  className="w-14 flex-shrink-0 px-1 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
+                >
+                  <option value="">-</option>
+                  {SCORE_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
             </td>
           )
         })
       )}
     </tr>
+  )
+}
+
+// ── Confirm Modal ─────────────────────────────────────────────────────────
+
+function ConfirmModal({
+  title,
+  message,
+  confirmLabel = 'Confirm',
+  onConfirm,
+  onCancel,
+}: {
+  title: string
+  message: string
+  confirmLabel?: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/30 z-40" onClick={onCancel} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600">{message}</p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              {confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -653,7 +712,7 @@ function HistorySection({ sheetId }: { sheetId: number }) {
   if (loading || !logs.length) return null
 
   return (
-    <div className="mt-3 max-w-2xl divide-y divide-gray-100">
+    <div className="mt-3 divide-y divide-gray-100">
       {logs.map((log) => (
         <div key={log.logId} className="flex items-start gap-4 py-2.5 pl-3 border-l-2 border-blue-200">
           <div className="flex-1 min-w-0">
