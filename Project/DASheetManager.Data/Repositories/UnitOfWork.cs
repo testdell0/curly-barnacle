@@ -20,7 +20,6 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<DaSheetJudgmentParam>? _sheetJudgmentParams;
     private IRepository<DaVendor>? _vendors;
     private IRepository<DaVendorEvaluation>? _vendorEvaluations;
-    private IRepository<DaEvalFile>? _evalFiles;
     private IRepository<DaSharedAccess>? _sharedAccess;
     private IRepository<DaAuditLog>? _auditLogs;
     public IRepository<DaUser> Users => _users ??= new Repository<DaUser>(_context);
@@ -32,7 +31,6 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<DaSheetJudgmentParam> SheetJudgmentParams => _sheetJudgmentParams ??= new Repository<DaSheetJudgmentParam>(_context);
     public IRepository<DaVendor> Vendors => _vendors ??= new Repository<DaVendor>(_context);
     public IRepository<DaVendorEvaluation> VendorEvaluations => _vendorEvaluations ??= new Repository<DaVendorEvaluation>(_context);
-    public IRepository<DaEvalFile> EvalFiles => _evalFiles ??= new Repository<DaEvalFile>(_context);
     public IRepository<DaSharedAccess> SharedAccess => _sharedAccess ??= new Repository<DaSharedAccess>(_context);
     public IRepository<DaAuditLog> AuditLogs => _auditLogs ??= new Repository<DaAuditLog>(_context);
 

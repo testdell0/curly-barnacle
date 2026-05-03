@@ -13,7 +13,6 @@ public interface IUnitOfWork : IDisposable
     IRepository<DaSheetJudgmentParam> SheetJudgmentParams { get; }
     IRepository<DaVendor> Vendors { get; }
     IRepository<DaVendorEvaluation> VendorEvaluations { get; }
-    IRepository<DaEvalFile> EvalFiles { get; }
     IRepository<DaSharedAccess> SharedAccess { get; }
     IRepository<DaAuditLog> AuditLogs { get; }
     Task<int> SaveChangesAsync();

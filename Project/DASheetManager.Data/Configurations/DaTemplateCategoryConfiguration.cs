@@ -14,8 +14,9 @@ public class DaTemplateCategoryConfiguration : IEntityTypeConfiguration<DaTempla
         builder.Property(e => e.CategoryId).HasColumnName("CATEGORY_ID").UseHiLo("SEQ_DA_TEMPLATE_CATEGORIES");
         builder.Property(e => e.TemplateId).HasColumnName("TEMPLATE_ID").IsRequired();
         builder.Property(e => e.Name).HasColumnName("NAME").HasMaxLength(200).IsRequired();
-        builder.Property(e => e.SortOrder).HasColumnName("SORT_ORDER").HasDefaultValue(0).IsRequired();
+        builder.Property(e => e.SortOrder).HasColumnName("SORT_ORDER").IsRequired();
         builder.Property(e => e.CreatedAt).HasColumnName("CREATED_AT").IsRequired();
+        builder.Property(e => e.UpdatedAt).HasColumnName("UPDATED_AT").IsRequired();
 
         builder.HasMany(e => e.Parameters).WithOne(p => p.Category).HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.Cascade);
 

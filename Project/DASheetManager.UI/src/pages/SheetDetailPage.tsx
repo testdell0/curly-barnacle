@@ -1,18 +1,15 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Plus,
-  Trash2,
   Save,
   CheckCircle2,
   Download,
   Share2,
   History,
-  Paperclip,
   X,
   Trophy,
-  Upload,
   ChevronDown,
   ChevronRight,
   MessageSquare,
@@ -27,7 +24,6 @@ import type {
   EvaluationDto,
   VendorScoreSummary,
   SharedAccessDto,
-  FileDto,
   AuditLogDto,
   CreateShareRequest,
 } from '@/types/da-types'
@@ -326,8 +322,6 @@ export function SheetDetailPage() {
                     getComment={getComment}
                     setScore={setScore}
                     setComment={setComment}
-                    evalMap={evalMap}
-                    sheetId={sheetId}
                     scores={scores}
                   />
                 )
@@ -394,8 +388,6 @@ function CatBlock({
   getComment,
   setScore,
   setComment,
-  evalMap,
-  sheetId,
   scores,
 }: {
   cat: { sheetCategoryId: number; name: string; parameters: { sheetParamId: number; name: string; weightage: number }[] }
@@ -405,8 +397,6 @@ function CatBlock({
   getComment: (vid: number, pid: number) => string
   setScore: (vid: number, pid: number, s: number | undefined) => void
   setComment: (vid: number, pid: number, c: string) => void
-  evalMap: Record<string, EvaluationDto>
-  sheetId: number
   scores: VendorScoreSummary[] | undefined
 }) {
   return (
@@ -431,8 +421,6 @@ function CatBlock({
           getComment={getComment}
           setScore={setScore}
           setComment={setComment}
-          evalMap={evalMap}
-          sheetId={sheetId}
         />
       ))}
       {/* Category subtotal */}
@@ -457,7 +445,7 @@ function CatBlock({
   )
 }
 
-// ── Parameter Row (score + comment + file) ───────────────────────────────
+// ── Parameter Row (score + comment) ──────────────────────────────────────
 
 function ParamRow({
   param,
@@ -467,8 +455,6 @@ function ParamRow({
   getComment,
   setScore,
   setComment,
-  evalMap,
-  sheetId,
 }: {
   param: { sheetParamId: number; name: string; weightage: number }
   vendors: { vendorId: number; name: string }[]
@@ -477,8 +463,6 @@ function ParamRow({
   getComment: (vid: number, pid: number) => string
   setScore: (vid: number, pid: number, s: number | undefined) => void
   setComment: (vid: number, pid: number, c: string) => void
-  evalMap: Record<string, EvaluationDto>
-  sheetId: number
 }) {
   const [expandedComment, setExpandedComment] = useState<string | null>(null)
 
@@ -522,12 +506,6 @@ function ParamRow({
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                 </button>
-                <FileAttachmentButton
-                  sheetId={sheetId}
-                  evalKey={evalKey}
-                  evalMap={evalMap}
-                  isDraft={isDraft}
-                />
               </div>
               {isCommentOpen && (
                 <input
@@ -544,137 +522,6 @@ function ParamRow({
         )
       })}
     </tr>
-  )
-}
-
-// ── File Attachment Button ────────────────────────────────────────────────
-
-function FileAttachmentButton({
-  sheetId,
-  evalKey,
-  evalMap,
-  isDraft,
-}: {
-  sheetId: number
-  evalKey: string
-  evalMap: Record<string, EvaluationDto>
-  isDraft: boolean
-}) {
-  const evalDto = evalMap[evalKey]
-  const [showFiles, setShowFiles] = useState(false)
-  const [files, setFiles] = useState<FileDto[]>([])
-  const [loading, setLoading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const loadFiles = useCallback(async () => {
-    if (!evalDto?.evalId) return
-    setLoading(true)
-    try {
-      const res = await api.get<FileDto[]>(`/api/evaluations/${evalDto.evalId}/files`)
-      setFiles(res)
-    } catch { /* ignore */ }
-    setLoading(false)
-  }, [evalDto?.evalId])
-
-  async function handleUpload(file: File) {
-    if (!evalDto?.evalId) return
-    try {
-      await api.upload<FileDto>(`/api/evaluations/${evalDto.evalId}/files`, file)
-      loadFiles()
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Upload failed')
-    }
-  }
-
-  async function handleDownload(fileId: number, filename: string) {
-    const blob = await api.download(`/api/files/${fileId}`)
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  async function handleDeleteFile(fileId: number) {
-    await api.delete<void>(`/api/files/${fileId}`)
-    loadFiles()
-  }
-
-  if (!evalDto?.evalId) return null
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => {
-          setShowFiles((v) => !v)
-          if (!showFiles) loadFiles()
-        }}
-        className={cn(
-          'p-0.5 rounded transition-colors',
-          evalDto.hasFile ? 'text-blue-500 hover:text-blue-700' : 'text-gray-300 hover:text-gray-500',
-        )}
-        title="Attachments"
-      >
-        <Paperclip className="w-3.5 h-3.5" />
-      </button>
-
-      {showFiles && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setShowFiles(false)} />
-          <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-lg border border-gray-200 shadow-lg z-20 p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-gray-700">Attachments</span>
-              {isDraft && (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-xs text-blue-600 hover:text-blue-700"
-                >
-                  <Upload className="w-3.5 h-3.5 inline mr-1" />
-                  Upload
-                </button>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) handleUpload(f)
-                e.target.value = ''
-              }}
-            />
-            {loading ? (
-              <p className="text-xs text-gray-400">Loading...</p>
-            ) : files.length === 0 ? (
-              <p className="text-xs text-gray-400">No files attached</p>
-            ) : (
-              <ul className="space-y-1 max-h-32 overflow-y-auto">
-                {files.map((f) => (
-                  <li key={f.fileId} className="flex items-center justify-between text-xs">
-                    <button
-                      onClick={() => handleDownload(f.fileId, f.originalFilename)}
-                      className="text-blue-600 hover:underline truncate flex-1 text-left"
-                    >
-                      {f.originalFilename}
-                    </button>
-                    {isDraft && (
-                      <button
-                        onClick={() => handleDeleteFile(f.fileId)}
-                        className="text-gray-400 hover:text-red-500 ml-1"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </>
-      )}
-    </div>
   )
 }
 

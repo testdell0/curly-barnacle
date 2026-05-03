@@ -12,5 +12,4 @@ public class DaVendorEvaluation
     // Navigation
     public DaVendor Vendor { get; set; } = null!;
     public DaSheetJudgmentParam Parameter { get; set; } = null!;
-    public ICollection<DaEvalFile> Files { get; set; } = new List<DaEvalFile>();
 }

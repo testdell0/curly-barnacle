@@ -47,7 +47,8 @@ public class DASheetService : IDASheetService
         if (!string.IsNullOrWhiteSpace(criteria.Search))
         {
             var search = criteria.Search.ToLower();
-            query = query.Where(s => s.Name.ToLower().Contains(search) || s.Creator.FullName.ToLower().Contains(search));
+            query = query.Where(s => s.Name.ToLower().Contains(search) ||
+                (s.Creator.FirstName + " " + s.Creator.LastName).ToLower().Contains(search));
         }
 
         if (!string.IsNullOrWhiteSpace(criteria.DaType))
