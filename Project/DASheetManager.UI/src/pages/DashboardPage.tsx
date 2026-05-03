@@ -1,5 +1,5 @@
 import { FileText, CheckCircle, LayoutTemplate, Users, TrendingUp, Loader2, Eye } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useDashboardStats, useRecentSheets } from '@/hooks/useDashboard'
 import { useAuthStore } from '@/store/authStore'
@@ -109,7 +109,12 @@ export function DashboardPage() {
 
       {/* Recent Sheets */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent DA Sheets</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Recent DA Sheets</h2>
+          <Link to="/sheets" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+            View all
+          </Link>
+        </div>
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           {recentLoading && (
             <div className="flex items-center justify-center py-12 text-gray-400">
@@ -142,9 +147,7 @@ export function DashboardPage() {
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Name</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Template</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                  {isAdmin && (
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Creator</th>
-                  )}
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Creator</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Updated</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide"></th>
                 </tr>
@@ -152,7 +155,7 @@ export function DashboardPage() {
               <tbody className="divide-y divide-gray-100">
                 {(!recent || recent.length === 0) && (
                   <tr>
-                    <td colSpan={isAdmin ? 6 : 5} className="text-center py-10 text-gray-400">
+                    <td colSpan={6} className="text-center py-10 text-gray-400">
                       No DA sheets yet.
                     </td>
                   </tr>
@@ -167,9 +170,7 @@ export function DashboardPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={sheet.status as RecentSheet['status']} />
                     </td>
-                    {isAdmin && (
-                      <td className="px-4 py-3 text-gray-600">{sheet.creatorName}</td>
-                    )}
+                    <td className="px-4 py-3 text-gray-600">{sheet.creatorName}</td>
                     <td className="px-4 py-3 text-gray-500">
                       {new Date(sheet.updatedAt).toLocaleDateString()}
                     </td>

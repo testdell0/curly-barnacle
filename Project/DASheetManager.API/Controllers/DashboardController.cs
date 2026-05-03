@@ -83,18 +83,14 @@ public class DashboardController : ControllerBase
         if (!TryGetUserId(out var userId))
             return Unauthorized();
 
-        var query = IsAdmin()
-            ? _uow.Sheets.Query()
-                .Include(s => s.Creator)
-                .Include(s => s.SourceTemplate)
-            : _uow.Sheets.Query()
-                .Where(s => s.CreatedBy == userId)
-                .Include(s => s.Creator)
-                .Include(s => s.SourceTemplate);
+        var query = _uow.Sheets.Query()
+            .Include(s => s.Creator)
+            .Include(s => s.SourceTemplate)
+            .Where(s => s.CreatedBy == userId);
 
         var sheets = await query
             .OrderByDescending(s => s.UpdatedAt)
-            .Take(10)
+            .Take(6)
             .ToListAsync();
 
         var result = sheets.Select(s => new

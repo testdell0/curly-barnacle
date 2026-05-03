@@ -198,13 +198,15 @@ export function SheetDetailPage() {
               </button>
             </>
           )}
-          <button
-            onClick={() => setShowShareModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Share2 className="w-4 h-4" />
-            Share
-          </button>
+          {!isViewOnly && (
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Share2 className="w-4 h-4" />
+              Share
+            </button>
+          )}
           <button
             onClick={handleExport}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
