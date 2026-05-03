@@ -33,3 +33,11 @@ export function useResetPassword() {
       usersApi.resetPassword(userId, body),
   })
 }
+
+export function useDeleteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: number) => usersApi.deleteUser(userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: USERS_KEY }),
+  })
+}

@@ -178,6 +178,7 @@ export interface SheetSearchParams {
   status?: string
   page?: number
   pageSize?: number
+  sharedOnly?: boolean
 }
 
 export interface SheetCategoryDto {
@@ -246,8 +247,6 @@ export interface EvaluationDto {
   evalScore?: number
   result: number
   vendorComment?: string
-  hasFile: boolean
-  fileName?: string
 }
 
 export interface EvaluationEntry {

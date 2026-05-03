@@ -7,7 +7,9 @@ public class DASheetListDto
     public string DaType { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public int Version { get; set; }
+    public string SourceTemplateName { get; set; } = string.Empty;
     public string CreatedByName { get; set; } = string.Empty;
+    public int CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
@@ -70,4 +72,5 @@ public class SheetSearchCriteria
     public string? Status { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 10;
+    public bool SharedOnly { get; set; } = false;
 }

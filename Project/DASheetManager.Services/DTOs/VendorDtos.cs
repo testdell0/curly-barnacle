@@ -22,8 +22,6 @@ public class EvaluationDto
     public int? EvalScore { get; set; }
     public decimal Result { get; set; }
     public string? VendorComment { get; set; }
-    public bool HasFile { get; set; }
-    public string? FileName { get; set; }
 }
 
 public class BulkSaveEvaluationsRequest

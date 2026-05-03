@@ -18,8 +18,6 @@ public class DaVendorEvaluationConfiguration : IEntityTypeConfiguration<DaVendor
         builder.Property(e => e.VendorComment).HasColumnName("VENDOR_COMMENT").HasMaxLength(2000);
         builder.Property(e => e.UpdatedAt).HasColumnName("UPDATED_AT").IsRequired();
 
-        builder.HasMany(e => e.Files).WithOne(f => f.Evaluation).HasForeignKey(f => f.EvalId).OnDelete(DeleteBehavior.Cascade);
-
         builder.HasIndex(e => e.VendorId);
         builder.HasIndex(e => e.SheetParamId);
         builder.HasIndex(e => new { e.VendorId, e.SheetParamId }).IsUnique();

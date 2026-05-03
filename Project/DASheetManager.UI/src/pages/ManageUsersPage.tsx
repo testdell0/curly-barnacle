@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, Search, Loader2, RotateCcw, Power, PowerOff } from 'lucide-react'
+import { UserPlus, Search, Loader2, RotateCcw, Power, PowerOff, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { useUsers, useCreateUser, useToggleUserActive, useResetPassword } from '@/hooks/useUsers'
+import { useUsers, useCreateUser, useToggleUserActive, useResetPassword, useDeleteUser } from '@/hooks/useUsers'
+import { useAuthStore } from '@/store/authStore'
 import { ApiError } from '@/api/client'
 import type { UserListItem } from '@/types/da-types'
 
@@ -68,9 +70,12 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
     setServerError(null)
     try {
       await createUser.mutateAsync(values)
+      toast.success('User created successfully.')
       onClose()
     } catch (err) {
-      setServerError(err instanceof ApiError ? err.message : 'Failed to create user.')
+      const msg = err instanceof ApiError ? err.message : 'Failed to create user.'
+      setServerError(msg)
+      toast.error(msg)
     }
   }
 
@@ -207,9 +212,12 @@ function ResetPasswordModal({ user, onClose }: { user: UserListItem; onClose: ()
     setServerError(null)
     try {
       await resetPw.mutateAsync({ userId: user.userId, body: values })
+      toast.success('Password reset. User must change on next login.')
       setDone(true)
     } catch (err) {
-      setServerError(err instanceof ApiError ? err.message : 'Failed to reset password.')
+      const msg = err instanceof ApiError ? err.message : 'Failed to reset password.'
+      setServerError(msg)
+      toast.error(msg)
     }
   }
 
@@ -275,11 +283,28 @@ function ResetPasswordModal({ user, onClose }: { user: UserListItem; onClose: ()
 
 export function ManageUsersPage() {
   const { data: users, isLoading, error } = useUsers()
+  const currentUser = useAuthStore((s) => s.user)
   const toggleActive = useToggleUserActive()
+  const deleteUser = useDeleteUser()
 
   const [search, setSearch] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [resetTarget, setResetTarget] = useState<UserListItem | null>(null)
+
+  function handleToggleActive(u: UserListItem) {
+    toggleActive.mutate(u.userId, {
+      onSuccess: () => toast.success(`User ${u.isActive ? 'deactivated' : 'activated'}.`),
+      onError: () => toast.error('Failed to update user status.'),
+    })
+  }
+
+  function handleDeleteUser(u: UserListItem) {
+    if (!confirm(`Delete user "${u.fullName}"? This cannot be undone.`)) return
+    deleteUser.mutate(u.userId, {
+      onSuccess: () => toast.success(`User "${u.fullName}" deleted.`),
+      onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to delete user.'),
+    })
+  }
 
   const filtered = users?.filter((u) => {
     const q = search.toLowerCase()
@@ -384,7 +409,7 @@ export function ManageUsersPage() {
 
                       {/* Activate / Deactivate */}
                       <button
-                        onClick={() => toggleActive.mutate(u.userId)}
+                        onClick={() => handleToggleActive(u)}
                         disabled={toggleActive.isPending}
                         title={u.isActive ? 'Deactivate user' : 'Activate user'}
                         className={cn(
@@ -396,6 +421,18 @@ export function ManageUsersPage() {
                       >
                         {u.isActive ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                       </button>
+
+                      {/* Delete (not self) */}
+                      {u.userId !== currentUser?.userId && (
+                        <button
+                          onClick={() => handleDeleteUser(u)}
+                          disabled={deleteUser.isPending}
+                          title="Delete user"
+                          className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

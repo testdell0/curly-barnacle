@@ -9,10 +9,12 @@ namespace DASheetManager.Services.Implementations;
 public class VendorEvaluationService : IVendorEvaluationService
 {
     private readonly IUnitOfWork _uow;
+    private readonly IAuditLogService _auditLog;
 
-    public VendorEvaluationService(IUnitOfWork uow)
+    public VendorEvaluationService(IUnitOfWork uow, IAuditLogService auditLog)
     {
         _uow = uow;
+        _auditLog = auditLog;
     }
 
     public async Task<VendorDto> AddVendorAsync(int sheetId, AddVendorRequest request, int userId)
@@ -96,7 +98,6 @@ public class VendorEvaluationService : IVendorEvaluationService
     {
         var evals = await _uow.VendorEvaluations.Query()
             .Include(e => e.Parameter)
-            .Include(e => e.Files)
             .Where(e => e.Vendor.SheetId == sheetId)
             .ToListAsync();
 
@@ -107,9 +108,7 @@ public class VendorEvaluationService : IVendorEvaluationService
             SheetParamId = e.SheetParamId,
             EvalScore = e.EvalScore,
             Result = (e.EvalScore ?? 0) * e.Parameter.Weightage,
-            VendorComment = e.VendorComment,
-            HasFile = e.Files.Any(),
-            FileName = e.Files.FirstOrDefault()?.OriginalFilename
+            VendorComment = e.VendorComment
         }).ToList();
     }
 
@@ -157,6 +156,17 @@ public class VendorEvaluationService : IVendorEvaluationService
         if (sheet != null) sheet.UpdatedAt = DateTime.UtcNow;
 
         await _uow.SaveChangesAsync();
+
+        var scoresSet = request.Evaluations.Count(e => e.EvalScore.HasValue);
+        var comments  = request.Evaluations.Count(e => !string.IsNullOrWhiteSpace(e.VendorComment));
+        await _auditLog.RecordAsync(new RecordAuditRequest
+        {
+            SheetId   = sheetId,
+            ChangedBy = userId,
+            Action    = "Evaluations Saved",
+            Summary   = $"Saved {request.Evaluations.Count} evaluation(s): {scoresSet} score(s) set, {comments} comment(s) set",
+            NewValues = System.Text.Json.JsonSerializer.Serialize(request.Evaluations)
+        });
     }
 
     public async Task<List<VendorScoreSummaryDto>> CalculateScoresAsync(int sheetId)

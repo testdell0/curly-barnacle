@@ -175,6 +175,26 @@ public class AuthService : IAuthService
         await _uow.SaveChangesAsync();
     }
 
+    public async Task DeleteUserAsync(int userId)
+    {
+        var user = await _uow.Users.GetByIdAsync(userId)
+            ?? throw new KeyNotFoundException("User not found.");
+
+        var hasSheets = await _uow.Sheets.Query().AnyAsync(s => s.CreatedBy == userId);
+        if (hasSheets)
+            throw new InvalidOperationException(
+                "Cannot delete a user who owns DA sheets. Delete or reassign their sheets first.");
+
+        // Remove shared-access records pointing to this user (FK_DA_SHARE_WITH RESTRICT)
+        var shares = await _uow.SharedAccess.Query()
+            .Where(sa => sa.SharedWithUser == userId)
+            .ToListAsync();
+        foreach (var share in shares) _uow.SharedAccess.Remove(share);
+
+        _uow.Users.Remove(user);
+        await _uow.SaveChangesAsync();
+    }
+
     // ── Hashing ───────────────────────────────────────────────────────────────
 
     /// <summary>Hash a plain-text password using BCrypt (work factor 12).</summary>
