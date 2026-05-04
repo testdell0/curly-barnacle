@@ -42,9 +42,6 @@ public class UserController : ControllerBase
             string.IsNullOrWhiteSpace(request.TempPassword))
             return BadRequest(new { error = "EmployeeCode, FirstName, LastName, Email, and TempPassword are required." });
 
-        if (request.TempPassword.Length < 6)
-            return BadRequest(new { error = "Temporary password must be at least 6 characters." });
-
         try
         {
             var user = await _authService.CreateUserAsync(request);

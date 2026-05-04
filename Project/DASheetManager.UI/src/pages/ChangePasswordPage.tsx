@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,17 +8,8 @@ import { cn } from '@/lib/utils'
 import { useChangePassword } from '@/hooks/useAuth'
 import { ApiError } from '@/api/client'
 import { useAuthStore } from '@/store/authStore'
-
-const schema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
-  confirmNewPassword: z.string().min(1, 'Please confirm your new password'),
-}).refine((v) => v.newPassword === v.confirmNewPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmNewPassword'],
-})
-
-type FormValues = z.infer<typeof schema>
+import { getPasswordErrors } from '@/lib/passwordValidation'
+import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter'
 
 export function ChangePasswordPage() {
   const navigate = useNavigate()
@@ -27,11 +18,40 @@ export function ChangePasswordPage() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  const pwContext = useMemo(() => ({
+    username:  user?.employeeCode,
+    email:     user?.email,
+    firstName: user?.fullName?.split(' ')[0],
+    lastName:  user?.fullName?.split(' ').slice(1).join(' '),
+  }), [user])
+
+  const schema = useMemo(() =>
+    z.object({
+      currentPassword:    z.string().min(1, 'Current password is required'),
+      newPassword:        z.string().min(1, 'New password is required'),
+      confirmNewPassword: z.string().min(1, 'Please confirm your new password'),
+    })
+    .superRefine((data, ctx) => {
+      const errors = getPasswordErrors(data.newPassword, pwContext)
+      if (errors.length > 0)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: errors[0], path: ['newPassword'] })
+    })
+    .refine((v) => v.newPassword === v.confirmNewPassword, {
+      message: 'Passwords do not match',
+      path: ['confirmNewPassword'],
+    }),
+  [pwContext])
+
+  type FormValues = z.infer<typeof schema>
+
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  const newPasswordValue = watch('newPassword', '')
 
   async function onSubmit(values: FormValues) {
     setServerError(null)
@@ -125,6 +145,7 @@ export function ChangePasswordPage() {
               {errors.newPassword && (
                 <p className="mt-1 text-xs text-red-600">{errors.newPassword.message}</p>
               )}
+              <PasswordStrengthMeter password={newPasswordValue} context={pwContext} />
             </div>
 
             <div>
