@@ -115,6 +115,17 @@ public class AuthService : IAuthService
         if (user.PasswordHash != null && !VerifyPassword(currentPassword, user.PasswordHash))
             return false;
 
+        // Must not reuse the current password
+        if (user.PasswordHash != null && !IsLegacyHash(user.PasswordHash) &&
+            BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
+            throw new InvalidOperationException("New password must be different from your current password.");
+
+        // Validate strength and personal-info rules
+        var pwErrors = PasswordValidator.Validate(
+            newPassword, user.EmployeeCode, user.Email, user.FirstName, user.LastName);
+        if (pwErrors.Count > 0)
+            throw new InvalidOperationException(string.Join(" ", pwErrors));
+
         user.PasswordHash = HashPassword(newPassword);
         user.MustChangePassword = false;
         user.UpdatedAt = DateTime.UtcNow;
@@ -146,6 +157,15 @@ public class AuthService : IAuthService
         var existing = await _uow.Users.FindAsync(u => u.EmployeeCode == request.EmployeeCode.Trim().ToUpper());
         if (existing.Any())
             throw new InvalidOperationException($"Employee code '{request.EmployeeCode}' is already in use.");
+
+        var pwErrors = PasswordValidator.Validate(
+            request.TempPassword,
+            request.EmployeeCode,
+            request.Email,
+            request.FirstName,
+            request.LastName);
+        if (pwErrors.Count > 0)
+            throw new InvalidOperationException(string.Join(" ", pwErrors));
 
         var user = new DaUser
         {

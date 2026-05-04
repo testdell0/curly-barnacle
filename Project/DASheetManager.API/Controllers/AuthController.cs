@@ -102,14 +102,20 @@ public class AuthController : ControllerBase
         if (model.NewPassword != model.ConfirmNewPassword)
             return BadRequest(new { error = "New password and confirmation do not match." });
 
-        if (string.IsNullOrWhiteSpace(model.NewPassword) || model.NewPassword.Length < 6)
-            return BadRequest(new { error = "New password must be at least 6 characters." });
-
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
             return Unauthorized();
 
-        var success = await _authService.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword);
+        bool success;
+        try
+        {
+            success = await _authService.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+
         if (!success)
             return BadRequest(new { error = "Current password is incorrect." });
 

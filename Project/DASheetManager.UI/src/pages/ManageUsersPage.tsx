@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 import { useUsers, useCreateUser, useToggleUserActive, useResetPassword, useDeleteUser } from '@/hooks/useUsers'
 import { useAuthStore } from '@/store/authStore'
 import { ApiError } from '@/api/client'
+import { getPasswordErrors } from '@/lib/passwordValidation'
+import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter'
 import type { UserListItem } from '@/types/da-types'
 
 // ── Add User form schema ───────────────────────────────────────────────────
@@ -18,7 +20,16 @@ const createSchema = z.object({
   lastName: z.string().min(1, 'Required').transform((v) => v.trim()),
   email: z.string().email('Invalid email').transform((v) => v.trim()),
   role: z.enum(['User', 'Admin']),
-  tempPassword: z.string().min(6, 'At least 6 characters'),
+  tempPassword: z.string().min(1, 'Password is required'),
+}).superRefine((data, ctx) => {
+  const errors = getPasswordErrors(data.tempPassword, {
+    username:  data.employeeCode,
+    email:     data.email,
+    firstName: data.firstName,
+    lastName:  data.lastName,
+  })
+  if (errors.length > 0)
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: errors[0], path: ['tempPassword'] })
 })
 
 type CreateFormValues = z.infer<typeof createSchema>
@@ -61,10 +72,15 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
   const createUser = useCreateUser()
   const [serverError, setServerError] = useState<string | null>(null)
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<CreateFormValues>({
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<CreateFormValues>({
     resolver: zodResolver(createSchema),
     defaultValues: { role: 'User' },
   })
+  const pwValue        = watch('tempPassword', '')
+  const firstNameValue = watch('firstName', '')
+  const lastNameValue  = watch('lastName', '')
+  const emailValue     = watch('email', '')
+  const empCodeValue   = watch('employeeCode', '')
 
   async function onSubmit(values: CreateFormValues) {
     setServerError(null)
@@ -164,14 +180,18 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
             <input
               {...register('tempPassword')}
               type="password"
-              placeholder="Min. 6 characters"
+              placeholder="Min. 12 characters"
               className={cn(
                 'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
                 errors.tempPassword ? 'border-red-400' : 'border-gray-300',
               )}
             />
             {errors.tempPassword && <p className="mt-1 text-xs text-red-600">{errors.tempPassword.message}</p>}
-            <p className="mt-1 text-xs text-gray-400">User will be required to change on first login.</p>
+            <PasswordStrengthMeter
+              password={pwValue}
+              context={{ username: empCodeValue, email: emailValue, firstName: firstNameValue, lastName: lastNameValue }}
+            />
+            <p className="mt-1.5 text-xs text-gray-400">User will be required to change on first login.</p>
           </div>
 
           <div className="flex gap-3 pt-2">
