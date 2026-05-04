@@ -90,7 +90,7 @@ public class DashboardController : ControllerBase
 
         var sheets = await query
             .OrderByDescending(s => s.UpdatedAt)
-            .Take(6)
+            .Take(10)
             .ToListAsync();
 
         var result = sheets.Select(s => new
