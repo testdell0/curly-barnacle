@@ -42,7 +42,7 @@ export function SheetsPage() {
     const { id, name } = deleteTarget
     setDeleteTarget(null)
     deleteSheet.mutate(id, {
-      onSuccess: () => toast.success(`Sheet "${name}" deleted.`),
+      onSuccess: () => toast.error(`Sheet "${name}" deleted.`),
       onError: () => toast.error('Failed to delete sheet.'),
     })
   }
