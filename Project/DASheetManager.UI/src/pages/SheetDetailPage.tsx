@@ -12,11 +12,15 @@ import {
   Trophy,
   ChevronDown,
   ChevronRight,
+  Pencil,
+  Copy,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { useSheet, useFinalizeSheet } from '@/hooks/useSheets'
+import { useSheet, useFinalizeSheet, useUpdateSheet, useDuplicateSheet } from '@/hooks/useSheets'
 import { useAddVendor, useDeleteVendor } from '@/hooks/useVendors'
 import { useEvaluations, useBulkSaveEvaluations, useScores } from '@/hooks/useEvaluations'
+import { useAuthStore } from '@/store/authStore'
 import { api } from '@/api/client'
 import type {
   EvaluationEntry,
@@ -38,6 +42,8 @@ export function SheetDetailPage() {
   const autoOpenShare = searchParams.get('share') === '1'
   const backTo = searchParams.get('from') === 'dashboard' ? '/' : '/sheets'
 
+  const currentUser = useAuthStore((s) => s.user)
+
   const { data: sheet, isLoading } = useSheet(sheetId)
   const { data: evaluations, refetch: refetchEvaluations } = useEvaluations(sheetId)
   const { data: scores } = useScores(sheetId)
@@ -45,6 +51,8 @@ export function SheetDetailPage() {
   const deleteVendor = useDeleteVendor(sheetId)
   const bulkSave = useBulkSaveEvaluations(sheetId)
   const finalizeSheet = useFinalizeSheet()
+  const updateSheet = useUpdateSheet()
+  const duplicateSheet = useDuplicateSheet()
 
   const [showAddVendor, setShowAddVendor] = useState(false)
   const [vendorName, setVendorName] = useState('')
@@ -53,6 +61,8 @@ export function SheetDetailPage() {
   const [showShareModal, setShowShareModal] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [removeVendorTarget, setRemoveVendorTarget] = useState<{ vendorId: number; name: string } | null>(null)
+  const [editingName, setEditingName] = useState(false)
+  const [nameValue, setNameValue] = useState('')
 
   // Auto-open share modal when navigated with ?share=1
   useEffect(() => {
@@ -69,7 +79,32 @@ export function SheetDetailPage() {
   }, [evaluations])
 
   const isDraft = !isViewOnly && sheet?.status === 'Draft'
+  const isSharedViewer = isViewOnly && !!currentUser && !!sheet && sheet.createdBy !== currentUser.userId
   const winner = scores?.find((s) => s.isWinner)
+
+  async function handleRename() {
+    if (!nameValue.trim() || nameValue.trim() === sheet?.name) {
+      setEditingName(false)
+      return
+    }
+    try {
+      await updateSheet.mutateAsync({ id: sheetId, body: { name: nameValue.trim() } })
+      setEditingName(false)
+      toast.success('Sheet renamed.')
+    } catch {
+      toast.error('Failed to rename sheet.')
+    }
+  }
+
+  async function handleDuplicateForSelf() {
+    try {
+      const newSheet = await duplicateSheet.mutateAsync(sheetId)
+      toast.success('Sheet duplicated to your account.')
+      navigate(`/sheets/${newSheet.sheetId}`)
+    } catch {
+      toast.error('Failed to duplicate sheet.')
+    }
+  }
 
   function getScore(vendorId: number, paramId: number): number | undefined {
     const key = `${vendorId}-${paramId}`
@@ -156,7 +191,46 @@ export function SheetDetailPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{sheet.name}</h1>
+            <div className="flex items-center gap-2">
+              {editingName ? (
+                <>
+                  <input
+                    type="text"
+                    value={nameValue}
+                    onChange={(e) => setNameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRename()
+                      if (e.key === 'Escape') setEditingName(false)
+                    }}
+                    autoFocus
+                    className="text-xl font-semibold text-gray-900 border-b-2 border-blue-500 focus:outline-none bg-transparent w-72"
+                  />
+                  <button
+                    onClick={handleRename}
+                    disabled={updateSheet.isPending}
+                    className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Save
+                  </button>
+                  <button onClick={() => setEditingName(false)} className="p-1 text-gray-400 hover:text-gray-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-xl font-semibold text-gray-900">{sheet.name}</h1>
+                  {isDraft && (
+                    <button
+                      onClick={() => { setNameValue(sheet.name); setEditingName(true) }}
+                      className="p-1 text-gray-300 hover:text-gray-500 transition-colors"
+                      title="Rename sheet"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs text-gray-500">{sheet.daType}</span>
               <span className="text-xs text-gray-300">|</span>
@@ -197,6 +271,17 @@ export function SheetDetailPage() {
                 Finalize
               </button>
             </>
+          )}
+          {isSharedViewer && sheet.status === 'Draft' && (
+            <button
+              onClick={handleDuplicateForSelf}
+              disabled={duplicateSheet.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              title="Copy this sheet to your account to edit"
+            >
+              <Copy className="w-4 h-4" />
+              Duplicate
+            </button>
           )}
           {!isViewOnly && (
             <button
@@ -657,7 +742,6 @@ function ShareModal({
   onClose: () => void
 }) {
   const [email, setEmail] = useState('')
-  const [accessLevel, setAccessLevel] = useState<'view' | 'edit'>('view')
   const [busy, setBusy] = useState(false)
   const [localShares, setLocalShares] = useState<SharedAccessDto[]>(shares)
 
@@ -667,7 +751,7 @@ function ShareModal({
     try {
       const res = await api.post<{ success: boolean; share: SharedAccessDto }>(
         `/api/sheets/${sheetId}/shares`,
-        { email: email.trim(), accessLevel } as CreateShareRequest,
+        { email: email.trim(), accessLevel: 'view' } as CreateShareRequest,
       )
       setLocalShares((prev) => [...prev, res.share])
       setEmail('')
@@ -700,14 +784,6 @@ function ShareModal({
               placeholder="User email..."
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <select
-              value={accessLevel}
-              onChange={(e) => setAccessLevel(e.target.value as 'view' | 'edit')}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="view">View</option>
-              <option value="edit">Edit</option>
-            </select>
             <button
               onClick={handleShare}
               disabled={busy || !email.trim()}
