@@ -31,7 +31,7 @@ export function checkPasswordStrength(password: string, ctx?: PasswordContext): 
   const lower = password.toLowerCase()
 
   const checks: PasswordChecks = {
-    length:        password.length >= 12,
+    length:        password.length >= 8,
     uppercase:     UPPERCASE_RE.test(password),
     lowercase:     LOWERCASE_RE.test(password),
     number:        NUMBER_RE.test(password),
@@ -76,7 +76,7 @@ export function getPasswordErrors(password: string, ctx?: PasswordContext): stri
   if (!password) return ['Password is required']
   const { checks } = checkPasswordStrength(password, ctx)
   const errors: string[] = []
-  if (!checks.length)        errors.push('At least 12 characters required')
+  if (!checks.length)        errors.push('At least 8 characters required')
   if (!checks.uppercase)     errors.push('At least 1 uppercase letter (A–Z)')
   if (!checks.lowercase)     errors.push('At least 1 lowercase letter (a–z)')
   if (!checks.number)        errors.push('At least 1 number (0–9)')

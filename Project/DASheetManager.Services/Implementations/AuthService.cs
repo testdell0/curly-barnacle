@@ -158,15 +158,6 @@ public class AuthService : IAuthService
         if (existing.Any())
             throw new InvalidOperationException($"Employee code '{request.EmployeeCode}' is already in use.");
 
-        var pwErrors = PasswordValidator.Validate(
-            request.TempPassword,
-            request.EmployeeCode,
-            request.Email,
-            request.FirstName,
-            request.LastName);
-        if (pwErrors.Count > 0)
-            throw new InvalidOperationException(string.Join(" ", pwErrors));
-
         var user = new DaUser
         {
             EmployeeCode = request.EmployeeCode.Trim().ToUpper(),

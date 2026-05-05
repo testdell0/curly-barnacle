@@ -34,7 +34,7 @@ export function PasswordStrengthMeter({ password, context }: Props) {
 
       {/* Requirements checklist */}
       <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-        <Req met={checks.length}        label="12+ characters" />
+        <Req met={checks.length}        label="8+ characters" />
         <Req met={checks.uppercase}     label="Uppercase (A–Z)" />
         <Req met={checks.lowercase}     label="Lowercase (a–z)" />
         <Req met={checks.number}        label="Number (0–9)" />

@@ -23,7 +23,7 @@ public static class PasswordValidator
     {
         var errors = new List<string>();
 
-        if (password.Length < 12)
+        if (password.Length < 8)
             errors.Add("Password must be at least 12 characters.");
 
         if (!UpperRx.IsMatch(password))
