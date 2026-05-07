@@ -4,6 +4,14 @@ public class LoginRequest
 {
     public string EmployeeCode { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public string? CaptchaToken  { get; set; }
+    public string? CaptchaAnswer { get; set; }
+}
+
+public class CaptchaChallengeDto
+{
+    public string ImageData { get; set; } = string.Empty;  // "data:image/png;base64,..."
+    public string Token     { get; set; } = string.Empty;
 }
 
 public class AuthResultDto

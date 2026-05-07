@@ -12,6 +12,8 @@ export interface CurrentUser {
 export interface LoginRequest {
   employeeCode: string
   password: string
+  captchaToken: string
+  captchaAnswer: string
 }
 
 export interface ChangePasswordRequest {

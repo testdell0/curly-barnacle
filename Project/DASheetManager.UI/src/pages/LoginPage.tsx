@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2 } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLogin } from '@/hooks/useAuth'
+import { authApi } from '@/api/auth'
 import { ApiError } from '@/api/client'
 
 const schema = z.object({
@@ -18,19 +19,55 @@ export function LoginPage() {
   const login = useLogin()
   const [serverError, setServerError] = useState<string | null>(null)
 
+  const [captchaImage,   setCaptchaImage]   = useState<string>('')
+  const [captchaToken,   setCaptchaToken]   = useState<string>('')
+  const [captchaAnswer,  setCaptchaAnswer]  = useState<string>('')
+  const [captchaError,   setCaptchaError]   = useState<string | null>(null)
+  const [captchaLoading, setCaptchaLoading] = useState<boolean>(false)
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
+  const fetchCaptcha = async () => {
+    setCaptchaLoading(true)
+    try {
+      const data = await authApi.getCaptcha()
+      setCaptchaImage(data.imageData)
+      setCaptchaToken(data.token)
+      setCaptchaAnswer('')
+      setCaptchaError(null)
+    } catch {
+      // silently ignore; image stays blank — user can click refresh
+    } finally {
+      setCaptchaLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchCaptcha() }, [])
+
   async function onSubmit(values: FormValues) {
     setServerError(null)
+
+    if (!captchaAnswer.trim()) {
+      setCaptchaError('Please enter the characters shown above')
+      return
+    }
+
     try {
-      await login.mutateAsync(values)
+      await login.mutateAsync({
+        ...values,
+        captchaToken,
+        captchaAnswer: captchaAnswer.trim().toUpperCase(),
+      })
     } catch (err) {
       if (err instanceof ApiError) {
         setServerError(err.message)
+        if (err.message.toLowerCase().includes('captcha')) {
+          fetchCaptcha()
+        }
       } else {
         setServerError('An unexpected error occurred. Please try again.')
       }
@@ -100,6 +137,50 @@ export function LoginPage() {
               />
               {errors.password && (
                 <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
+              )}
+            </div>
+
+            {/* CAPTCHA */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Security check
+              </label>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-50 select-none">
+                  {captchaImage ? (
+                    <img
+                      src={captchaImage}
+                      alt="CAPTCHA"
+                      className="h-[60px] w-[200px] block"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="h-[60px] w-[200px] animate-pulse bg-gray-200" />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={fetchCaptcha}
+                  disabled={captchaLoading}
+                  title="Get new image"
+                  className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-40"
+                >
+                  <RefreshCw className={cn('w-4 h-4', captchaLoading && 'animate-spin')} />
+                </button>
+              </div>
+              <input
+                value={captchaAnswer}
+                onChange={e => { setCaptchaAnswer(e.target.value); setCaptchaError(null) }}
+                placeholder="Enter the characters above"
+                autoComplete="off"
+                className={cn(
+                  'w-full px-3 py-2 rounded-lg border text-sm tracking-widest uppercase transition-colors',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                  captchaError ? 'border-red-400' : 'border-gray-300',
+                )}
+              />
+              {captchaError && (
+                <p className="mt-1 text-xs text-red-600">{captchaError}</p>
               )}
             </div>
 
