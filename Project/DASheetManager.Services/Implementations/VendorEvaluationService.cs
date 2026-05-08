@@ -32,7 +32,14 @@ public class VendorEvaluationService : IVendorEvaluationService
         };
 
         await _uow.Vendors.AddAsync(vendor);
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException($"A vendor named \"{request.Name}\" already exists in this sheet.");
+        }
 
         // Pre-populate evaluation rows for all sheet params
         var sheetParams = await _uow.SheetJudgmentParams.Query()
@@ -64,7 +71,14 @@ public class VendorEvaluationService : IVendorEvaluationService
             }
         }
 
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException("Failed to initialize evaluation rows: duplicate entry detected.");
+        }
 
         return new VendorDto
         {
@@ -81,7 +95,14 @@ public class VendorEvaluationService : IVendorEvaluationService
             throw new KeyNotFoundException($"Vendor {vendorId} not found in sheet {sheetId}.");
 
         vendor.Name = request.Name;
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException($"A vendor named \"{request.Name}\" already exists in this sheet.");
+        }
     }
 
     public async Task RemoveVendorAsync(int sheetId, int vendorId, int userId)
@@ -155,7 +176,14 @@ public class VendorEvaluationService : IVendorEvaluationService
         var sheet = await _uow.Sheets.GetByIdAsync(sheetId);
         if (sheet != null) sheet.UpdatedAt = DateTime.UtcNow;
 
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException("Evaluation save failed due to a duplicate entry. Please refresh and try again.");
+        }
 
         var scoresSet = request.Evaluations.Count(e => e.EvalScore.HasValue);
         var comments  = request.Evaluations.Count(e => !string.IsNullOrWhiteSpace(e.VendorComment));
@@ -232,4 +260,7 @@ public class VendorEvaluationService : IVendorEvaluationService
 
         return summaries;
     }
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException?.Message.Contains("ORA-00001") == true;
 }

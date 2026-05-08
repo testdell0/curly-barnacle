@@ -38,7 +38,14 @@ public class ShareService : IShareService
         };
 
         await _uow.SharedAccess.AddAsync(share);
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException($"Sheet is already shared with {request.Email}.");
+        }
 
         return new SharedAccessDto
         {
@@ -107,6 +114,9 @@ public class ShareService : IShareService
 
         return share?.AccessLevel;
     }
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException?.Message.Contains("ORA-00001") == true;
 
     public async Task<bool> HasAccessAsync(int sheetId, int userId, string requiredLevel = "view")
     {

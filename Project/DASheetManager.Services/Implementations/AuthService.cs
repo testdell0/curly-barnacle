@@ -94,7 +94,15 @@ public class AuthService : IAuthService
                 // PasswordHash intentionally null: SSO users bypass the password form
             };
             await _uow.Users.AddAsync(user);
-            await _uow.SaveChangesAsync();
+            try
+            {
+                await _uow.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                throw new InvalidOperationException(
+                    $"An account with employee code '{employeeCode}' or email '{email}' already exists.");
+            }
         }
         else if (!user.IsActive)
         {
@@ -173,7 +181,16 @@ public class AuthService : IAuthService
         };
 
         await _uow.Users.AddAsync(user);
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException(
+                $"Employee code '{request.EmployeeCode}' or email '{request.Email}' is already in use.");
+        }
+
         return MapToListDto(user);
     }
 
@@ -295,4 +312,7 @@ public class AuthService : IAuthService
         MustChangePassword = u.MustChangePassword,
         CreatedAt = u.CreatedAt
     };
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException?.Message.Contains("ORA-00001") == true;
 }
