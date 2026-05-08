@@ -191,17 +191,27 @@ public class AuthService : IAuthService
         var user = await _uow.Users.GetByIdAsync(userId)
             ?? throw new KeyNotFoundException("User not found.");
 
-        var hasSheets = await _uow.Sheets.Query().AnyAsync(s => s.CreatedBy == userId);
-        if (hasSheets)
-            throw new InvalidOperationException(
-                "Cannot delete a user who owns DA sheets. Delete or reassign their sheets first.");
-
-        // Remove shared-access records pointing to this user (FK_DA_SHARE_WITH RESTRICT)
-        var shares = await _uow.SharedAccess.Query()
+        // 1. Remove shares where this user is a recipient (FK_DA_SHARE_WITH RESTRICT)
+        var sharesAsRecipient = await _uow.SharedAccess.Query()
             .Where(sa => sa.SharedWithUser == userId)
             .ToListAsync();
-        foreach (var share in shares) _uow.SharedAccess.Remove(share);
+        foreach (var s in sharesAsRecipient) _uow.SharedAccess.Remove(s);
 
+        // 2. Remove shares the user created on their own sheets (FK_DA_SHARE_BY RESTRICT)
+        var sharesAsOwner = await _uow.SharedAccess.Query()
+            .Where(sa => sa.SharedByUser == userId)
+            .ToListAsync();
+        foreach (var s in sharesAsOwner) _uow.SharedAccess.Remove(s);
+
+        // 3. Delete all sheets owned by this user.
+        //    DB cascades (ON DELETE CASCADE) handle child rows:
+        //    categories, params, vendors, evaluations, audit logs.
+        var sheets = await _uow.Sheets.Query()
+            .Where(s => s.CreatedBy == userId)
+            .ToListAsync();
+        foreach (var sheet in sheets) _uow.Sheets.Remove(sheet);
+
+        // 4. Delete the user
         _uow.Users.Remove(user);
         await _uow.SaveChangesAsync();
     }
