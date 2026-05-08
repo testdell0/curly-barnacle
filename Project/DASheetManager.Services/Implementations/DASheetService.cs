@@ -252,7 +252,15 @@ public class DASheetService : IDASheetService
             }
         }
 
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException("Failed to duplicate evaluations: a constraint conflict was detected.");
+        }
+
         return (await GetByIdAsync(newSheet.SheetId, userId))!;
     }
 
@@ -282,6 +290,9 @@ public class DASheetService : IDASheetService
             FinalSheets = sheets.Count(s => s.Status == "Final")
         };
     }
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException?.Message.Contains("ORA-00001") == true;
 
     private static DASheetListDto MapToListDto(DaSheet s) => new()
     {

@@ -88,7 +88,14 @@ public class TemplateService : ITemplateService
         }
 
         await _uow.Templates.AddAsync(template);
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException($"A template named \"{request.Name}\" already exists.");
+        }
 
         return (await GetByIdAsync(template.TemplateId))!;
     }
@@ -172,7 +179,15 @@ public class TemplateService : ITemplateService
             }
         }
 
-        await _uow.SaveChangesAsync();
+        try
+        {
+            await _uow.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException($"A template named \"{request.Name}\" already exists.");
+        }
+
         return (await GetByIdAsync(templateId))!;
     }
 
@@ -244,4 +259,7 @@ public class TemplateService : ITemplateService
             }).ToList()
         }).ToList()
     };
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException?.Message.Contains("ORA-00001") == true;
 }
