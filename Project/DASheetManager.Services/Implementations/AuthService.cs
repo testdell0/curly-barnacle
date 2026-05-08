@@ -199,7 +199,7 @@ public class AuthService : IAuthService
 
         // 2. Remove shares the user created on their own sheets (FK_DA_SHARE_BY RESTRICT)
         var sharesAsOwner = await _uow.SharedAccess.Query()
-            .Where(sa => sa.SharedByUser == userId)
+            .Where(sa => sa.SharedBy == userId)
             .ToListAsync();
         foreach (var s in sharesAsOwner) _uow.SharedAccess.Remove(s);
 
