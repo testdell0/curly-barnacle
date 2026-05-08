@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Pencil, Trash2, Globe, GlobeLock, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ApiError } from '@/api/client'
 import {
   useTemplates,
   useDeleteTemplate,
@@ -29,8 +30,8 @@ export function TemplatesPage() {
     const { id, name } = deleteTarget
     setDeleteTarget(null)
     deleteTemplate.mutate(id, {
-      onSuccess: () => toast.error('Template Deleted'),
-      onError: () => toast.error('Failed to delete template'),
+      onSuccess: () => toast.success(`Template "${name}" deleted.`),
+      onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to delete template.'),
     })
   }
 
@@ -115,13 +116,9 @@ export function TemplatesPage() {
                       {t.status === 'Draft' ? (
                         <button
                           onClick={() => publishTemplate.mutate(t.templateId, {
-                            onSuccess: () => {
-                              toast.success('Template Published')
-                            },
-                            onError: () => {
-                              toast.error('Failed to publish template')
-                            },}
-                          )}
+                            onSuccess: () => toast.success('Template published.'),
+                            onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to publish template.'),
+                          })}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
                           title="Publish"
                         >
@@ -130,12 +127,8 @@ export function TemplatesPage() {
                       ) : (
                         <button
                           onClick={() => unpublishTemplate.mutate(t.templateId, {
-                            onSuccess: () => {
-                              toast.warning('Template Unpublished')
-                            },
-                            onError: () => {
-                              toast.error('Failed to unpublish template')
-                            },}
+                            onSuccess: () => toast.warning('Template unpublished.'),
+                            onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to unpublish template.'),}
                           )}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 transition-colors"
                           title="Unpublish"

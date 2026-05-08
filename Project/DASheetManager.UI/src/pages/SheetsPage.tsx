@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Plus, Copy, Trash2, Eye, Pencil, Share2, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { ApiError } from '@/api/client'
 import { useSheets, useDeleteSheet, useDuplicateSheet } from '@/hooks/useSheets'
 import { useAuthStore } from '@/store/authStore'
 import type { SheetSearchParams } from '@/types/da-types'
@@ -42,15 +43,15 @@ export function SheetsPage() {
     const { id, name } = deleteTarget
     setDeleteTarget(null)
     deleteSheet.mutate(id, {
-      onSuccess: () => toast.error(`Sheet "${name}" deleted.`),
-      onError: () => toast.error('Failed to delete sheet.'),
+      onSuccess: () => toast.success(`Sheet "${name}" deleted.`),
+      onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to delete sheet.'),
     })
   }
 
   function handleDuplicate(id: number, name: string) {
     duplicateSheet.mutate(id, {
       onSuccess: () => toast.success(`Sheet "${name}" duplicated.`),
-      onError: () => toast.error('Failed to duplicate sheet.'),
+      onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to duplicate sheet.'),
     })
   }
 

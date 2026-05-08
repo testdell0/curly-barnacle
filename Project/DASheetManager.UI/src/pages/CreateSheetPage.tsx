@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ApiError } from '@/api/client'
 import { usePublishedTemplates, useTemplateDetail, useCreateSheet } from '@/hooks/useSheets'
 
 export function CreateSheetPage() {
@@ -29,7 +30,7 @@ export function CreateSheetPage() {
       })
       navigate(`/sheets/${sheet.sheetId}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create sheet')
+      setError(err instanceof ApiError ? err.message : 'Failed to create sheet.')
     }
   }
 
