@@ -7,4 +7,5 @@ export const authApi = {
   me: () => api.get<CurrentUser>('/api/auth/me'),
   changePassword: (body: ChangePasswordRequest) =>
     api.post<{ message: string }>('/api/auth/change-password', body),
+  getCaptcha: () => api.get<{ imageData: string; token: string }>('/api/auth/captcha'),
 }

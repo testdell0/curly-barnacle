@@ -1,4 +1,5 @@
 using System.Text;
+using DASheetManager.API.Services;
 using DASheetManager.Data;
 using DASheetManager.Data.Repositories;
 using DASheetManager.Services.Implementations;
@@ -51,6 +52,7 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 // Singleton: in-memory login rate limiter (5 failures → 15 min lockout)
 builder.Services.AddSingleton<ILoginAttemptTracker, LoginAttemptTracker>();
+builder.Services.AddSingleton<ICaptchaService, CaptchaService>();
 
 // IMemoryCache: used by auth middleware
 builder.Services.AddMemoryCache();

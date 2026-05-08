@@ -1,3 +1,4 @@
+using DASheetManager.API.Services;
 using DASheetManager.Services.DTOs;
 using DASheetManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -9,14 +10,20 @@ namespace DASheetManager.API.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly IAuthService         _authService;
     private readonly ILoginAttemptTracker _loginTracker;
+    private readonly ICaptchaService      _captchaService;
 
-    public AuthController(IAuthService authService, ILoginAttemptTracker loginTracker)
+    public AuthController(IAuthService authService, ILoginAttemptTracker loginTracker, ICaptchaService captchaService)
     {
-        _authService = authService;
-        _loginTracker = loginTracker;
+        _authService    = authService;
+        _loginTracker   = loginTracker;
+        _captchaService = captchaService;
     }
+
+    /// <summary>GET /api/auth/captcha — returns a new distorted-image CAPTCHA challenge.</summary>
+    [HttpGet("captcha")]
+    public IActionResult GetCaptcha() => Ok(_captchaService.GenerateChallenge());
 
     /// <summary>
     /// POST /api/auth/login
@@ -28,6 +35,10 @@ public class AuthController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
+
+        if (string.IsNullOrWhiteSpace(model.CaptchaToken) ||
+            !_captchaService.Validate(model.CaptchaToken, model.CaptchaAnswer ?? ""))
+            return BadRequest(new { error = "Incorrect or expired CAPTCHA. Please try the new image." });
 
         if (_loginTracker.IsLockedOut(model.EmployeeCode))
         {
