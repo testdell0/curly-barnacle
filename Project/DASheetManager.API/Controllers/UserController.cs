@@ -1,3 +1,4 @@
+using DASheetManager.API.Helpers;
 using DASheetManager.Services.DTOs;
 using DASheetManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -10,11 +11,13 @@ namespace DASheetManager.API.Controllers;
 [Authorize]
 public class UserController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly IAuthService             _authService;
+    private readonly ILogger<UserController>  _logger;
 
-    public UserController(IAuthService authService)
+    public UserController(IAuthService authService, ILogger<UserController> logger)
     {
         _authService = authService;
+        _logger      = logger;
     }
 
     private bool IsAdmin() =>
@@ -40,16 +43,17 @@ public class UserController : ControllerBase
             string.IsNullOrWhiteSpace(request.LastName) ||
             string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.TempPassword))
-            return BadRequest(new { error = "EmployeeCode, FirstName, LastName, Email, and TempPassword are required." });
+            return BadRequest(ApiErrors.ValidationError("EmployeeCode, FirstName, LastName, Email, and TempPassword are required."));
 
         try
         {
             var user = await _authService.CreateUserAsync(request);
+            _logger.LogInformation("User created: {EmployeeCode}", request.EmployeeCode);
             return Ok(user);
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new { error = ex.Message });
+            return Conflict(ApiErrors.Conflict(ex.Message));
         }
     }
 
@@ -61,10 +65,11 @@ public class UserController : ControllerBase
         try
         {
             await _authService.DeleteUserAsync(id);
+            _logger.LogInformation("User {UserId} deleted", id);
             return Ok(new { message = "User deleted." });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return Conflict(ApiErrors.Conflict(ex.Message)); }
     }
 
     /// <summary>POST /api/users/{id}/toggle-active — activate / deactivate (Admin only)</summary>
@@ -80,7 +85,7 @@ public class UserController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { error = ex.Message });
+            return NotFound(ApiErrors.NotFound(ex.Message));
         }
     }
 
@@ -91,16 +96,17 @@ public class UserController : ControllerBase
         if (!IsAdmin()) return Forbid();
 
         if (string.IsNullOrWhiteSpace(request.TempPassword) || request.TempPassword.Length < 6)
-            return BadRequest(new { error = "Temporary password must be at least 6 characters." });
+            return BadRequest(ApiErrors.ValidationError("Temporary password must be at least 6 characters."));
 
         try
         {
             await _authService.AdminResetPasswordAsync(id, request.TempPassword);
+            _logger.LogInformation("Password reset for user {UserId}", id);
             return Ok(new { message = "Password reset. User must change on next login." });
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { error = ex.Message });
+            return NotFound(ApiErrors.NotFound(ex.Message));
         }
     }
 }

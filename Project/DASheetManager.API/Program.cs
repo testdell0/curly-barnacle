@@ -1,4 +1,5 @@
 using System.Text;
+using DASheetManager.API.Middleware;
 using DASheetManager.API.Services;
 using DASheetManager.Data;
 using DASheetManager.Data.Repositories;
@@ -7,8 +8,19 @@ using DASheetManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+
+// Bootstrap logger captures startup errors before host is built
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, services, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .ReadFrom.Services(services)
+       .Enrich.FromLogContext());
 
 // ── JWT key guard ──────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -97,6 +109,9 @@ builder.Services.AddControllers();
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseSerilogRequestLogging();
 
 // ── Static Files (React SPA build output) ─────────────────────────────────
 app.UseDefaultFiles();

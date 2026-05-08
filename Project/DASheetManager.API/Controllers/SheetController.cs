@@ -1,3 +1,4 @@
+using DASheetManager.API.Helpers;
 using DASheetManager.Services.DTOs;
 using DASheetManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -44,7 +45,7 @@ public class SheetController : ControllerBase
     {
         var template = await _templateService.GetByIdAsync(id);
         return template == null
-            ? NotFound(new { error = $"Template {id} not found." })
+            ? NotFound(ApiErrors.NotFound($"Template {id} not found."))
             : Ok(template);
     }
 
@@ -62,7 +63,7 @@ public class SheetController : ControllerBase
     {
         var sheet = await _sheetService.GetByIdAsync(id, GetUserId());
         return sheet == null
-            ? NotFound(new { error = $"Sheet {id} not found." })
+            ? NotFound(ApiErrors.NotFound($"Sheet {id} not found."))
             : Ok(sheet);
     }
 
@@ -71,20 +72,16 @@ public class SheetController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateDASheetRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest(new { error = "Sheet name is required." });
+            return BadRequest(ApiErrors.ValidationError("Sheet name is required."));
 
         try
         {
             var sheet = await _sheetService.CreateFromTemplateAsync(request, GetUserId());
+            _logger.LogInformation("Sheet {SheetId} created from template {TemplateId}", sheet.SheetId, request.TemplateId);
             return CreatedAtAction(nameof(GetById), new { id = sheet.SheetId }, sheet);
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "CreateSheet failed");
-            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message });
-        }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>PUT /api/sheets/{id} — Update sheet name/notes (Draft only).</summary>
@@ -96,8 +93,8 @@ public class SheetController : ControllerBase
             var sheet = await _sheetService.UpdateAsync(id, request.Name, request.Notes, GetUserId());
             return Ok(sheet);
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>DELETE /api/sheets/{id} — Delete sheet (owner or admin).</summary>
@@ -109,8 +106,8 @@ public class SheetController : ControllerBase
             await _sheetService.DeleteAsync(id, GetUserId());
             return NoContent();
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>POST /api/sheets/{id}/duplicate — Deep-copy sheet.</summary>
@@ -122,8 +119,8 @@ public class SheetController : ControllerBase
             var sheet = await _sheetService.DuplicateAsync(id, GetUserId());
             return Ok(sheet);
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>POST /api/sheets/{id}/finalize — Transition Draft → Final.</summary>
@@ -133,10 +130,11 @@ public class SheetController : ControllerBase
         try
         {
             await _sheetService.FinalizeAsync(id, GetUserId());
+            _logger.LogInformation("Sheet {SheetId} finalized", id);
             return Ok(new { message = "Sheet finalized." });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 }
 

@@ -1,3 +1,4 @@
+using DASheetManager.API.Helpers;
 using DASheetManager.Services.DTOs;
 using DASheetManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -33,20 +34,15 @@ public class VendorController : ControllerBase
     public async Task<IActionResult> AddVendor(int sheetId, [FromBody] AddVendorRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest(new { error = "Vendor name is required." });
+            return BadRequest(ApiErrors.ValidationError("Vendor name is required."));
 
         try
         {
             var vendor = await _evalService.AddVendorAsync(sheetId, request, GetUserId());
             return Ok(new { success = true, vendor });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "AddVendor failed for sheetId={SheetId}", sheetId);
-            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message });
-        }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>PUT /api/sheets/{sheetId}/vendors/{vendorId} — Update vendor name.</summary>
@@ -58,8 +54,8 @@ public class VendorController : ControllerBase
             await _evalService.UpdateVendorAsync(sheetId, vendorId, request, GetUserId());
             return Ok(new { success = true });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>DELETE /api/sheets/{sheetId}/vendors/{vendorId} — Remove vendor.</summary>
@@ -71,8 +67,8 @@ public class VendorController : ControllerBase
             await _evalService.RemoveVendorAsync(sheetId, vendorId, GetUserId());
             return Ok(new { success = true });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     // ── Evaluations ────────────────────────────────────────────────────────
@@ -94,13 +90,8 @@ public class VendorController : ControllerBase
             await _evalService.BulkSaveEvaluationsAsync(sheetId, request, GetUserId());
             return Ok(new { success = true });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "BulkSave failed for sheetId={SheetId}", sheetId);
-            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message });
-        }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>GET /api/sheets/{sheetId}/scores — Calculate vendor scores.</summary>
