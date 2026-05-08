@@ -481,10 +481,14 @@ function ConfirmDeleteModal({
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-sm text-gray-600">
-            Are you sure you want to delete <span className="font-medium text-gray-900">"{name}"</span>?
-            This cannot be undone.
-          </p>
+          <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+            <p className="text-sm font-medium text-red-800 mb-1">Warning: Permanent data loss</p>
+            <p className="text-sm text-red-700">
+              Deleting <span className="font-semibold">{name}</span> will permanently remove their
+              account, <strong>all their DA sheets</strong>, evaluations, and all shared access.
+              This cannot be undone.
+            </p>
+          </div>
           <div className="flex justify-end gap-2 pt-2">
             <button
               onClick={onCancel}

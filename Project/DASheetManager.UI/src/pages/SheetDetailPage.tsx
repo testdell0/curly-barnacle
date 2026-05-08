@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -741,9 +742,13 @@ function ShareModal({
   shares: SharedAccessDto[]
   onClose: () => void
 }) {
+  const qc = useQueryClient()
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [localShares, setLocalShares] = useState<SharedAccessDto[]>(shares)
+
+  // Sync local list whenever the parent query refreshes (e.g. after invalidation)
+  useEffect(() => { setLocalShares(shares) }, [shares])
 
   async function handleShare() {
     if (!email.trim()) return
@@ -755,6 +760,7 @@ function ShareModal({
       )
       setLocalShares((prev) => [...prev, res.share])
       setEmail('')
+      await qc.invalidateQueries({ queryKey: ['sheet', sheetId] })
     } catch { /* ignore */ }
     setBusy(false)
   }
@@ -762,6 +768,7 @@ function ShareModal({
   async function handleRemoveShare(shareId: number) {
     await api.delete<{ success: boolean }>(`/api/sheets/${sheetId}/shares/${shareId}`)
     setLocalShares((prev) => prev.filter((s) => s.shareId !== shareId))
+    await qc.invalidateQueries({ queryKey: ['sheet', sheetId] })
   }
 
   return (
