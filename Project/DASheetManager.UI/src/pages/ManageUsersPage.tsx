@@ -294,9 +294,17 @@ export function ManageUsersPage() {
 
   function handleToggleActive(u: UserListItem) {
     toggleActive.mutate(u.userId, {
-      onSuccess: () => toast.success(`User ${u.isActive ? 'deactivated' : 'activated'}.`),
-      onError: () => toast.error('Failed to update user status.'),
-    })
+      onSuccess: () => {
+        if (u.isActive) {
+          toast.warning('User deactivated.');
+        } else {
+          toast.success('User activated.');
+        }
+      },
+      onError: () => {
+        toast.error('Failed to update user status.');
+      },
+    });
   }
 
   function confirmDeleteUser() {
@@ -304,7 +312,7 @@ export function ManageUsersPage() {
     const u = deleteTarget
     setDeleteTarget(null)
     deleteUser.mutate(u.userId, {
-      onSuccess: () => toast.success(`User "${u.fullName}" deleted.`),
+      onSuccess: () => toast.error(`User "${u.fullName}" deleted.`),
       onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to delete user.'),
     })
   }
