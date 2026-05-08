@@ -22,7 +22,7 @@ import { useSheet, useFinalizeSheet, useUpdateSheet, useDuplicateSheet } from '@
 import { useAddVendor, useDeleteVendor } from '@/hooks/useVendors'
 import { useEvaluations, useBulkSaveEvaluations, useScores } from '@/hooks/useEvaluations'
 import { useAuthStore } from '@/store/authStore'
-import { api } from '@/api/client'
+import { api, ApiError } from '@/api/client'
 import type {
   EvaluationEntry,
   EvaluationDto,
@@ -92,8 +92,8 @@ export function SheetDetailPage() {
       await updateSheet.mutateAsync({ id: sheetId, body: { name: nameValue.trim() } })
       setEditingName(false)
       toast.success('Sheet renamed.')
-    } catch {
-      toast.error('Failed to rename sheet.')
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to rename sheet.')
     }
   }
 
@@ -102,8 +102,8 @@ export function SheetDetailPage() {
       const newSheet = await duplicateSheet.mutateAsync(sheetId)
       toast.success('Sheet duplicated to your account.')
       navigate(`/sheets/${newSheet.sheetId}`)
-    } catch {
-      toast.error('Failed to duplicate sheet.')
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to duplicate sheet.')
     }
   }
 
@@ -148,23 +148,32 @@ export function SheetDetailPage() {
       }
     }
 
-    await bulkSave.mutateAsync({ evaluations: entries })
-    await refetchEvaluations()
-    setLocalScores({})
-    setSaveMsg('Evaluations saved successfully!')
-    setTimeout(() => setSaveMsg(null), 3000)
+    try {
+      await bulkSave.mutateAsync({ evaluations: entries })
+      await refetchEvaluations()
+      setLocalScores({})
+      setSaveMsg('Evaluations saved successfully!')
+      setTimeout(() => setSaveMsg(null), 3000)
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to save evaluations.')
+    }
   }
 
   function handleAddVendor() {
     if (!vendorName.trim()) return
-    addVendor.mutate({ name: vendorName.trim() })
+    addVendor.mutate({ name: vendorName.trim() }, {
+      onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to add vendor.'),
+    })
     setVendorName('')
     setShowAddVendor(false)
   }
 
   function handleFinalize() {
     if (!confirm('Finalize this sheet? Once finalized, it will be marked as Final.')) return
-    finalizeSheet.mutate(sheetId)
+    finalizeSheet.mutate(sheetId, {
+      onSuccess: () => toast.success('Sheet finalized.'),
+      onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to finalize sheet.'),
+    })
   }
 
   async function handleExport() {
@@ -531,7 +540,9 @@ export function SheetDetailPage() {
           message={`Remove "${removeVendorTarget.name}" and all their evaluation scores?`}
           confirmLabel="Remove"
           onConfirm={() => {
-            deleteVendor.mutate(removeVendorTarget.vendorId)
+            deleteVendor.mutate(removeVendorTarget.vendorId, {
+              onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Failed to remove vendor.'),
+            })
             setRemoveVendorTarget(null)
           }}
           onCancel={() => setRemoveVendorTarget(null)}
@@ -761,14 +772,20 @@ function ShareModal({
       setLocalShares((prev) => [...prev, res.share])
       setEmail('')
       await qc.invalidateQueries({ queryKey: ['sheet', sheetId] })
-    } catch { /* ignore */ }
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to share sheet.')
+    }
     setBusy(false)
   }
 
   async function handleRemoveShare(shareId: number) {
-    await api.delete<{ success: boolean }>(`/api/sheets/${sheetId}/shares/${shareId}`)
-    setLocalShares((prev) => prev.filter((s) => s.shareId !== shareId))
-    await qc.invalidateQueries({ queryKey: ['sheet', sheetId] })
+    try {
+      await api.delete<{ success: boolean }>(`/api/sheets/${sheetId}/shares/${shareId}`)
+      setLocalShares((prev) => prev.filter((s) => s.shareId !== shareId))
+      await qc.invalidateQueries({ queryKey: ['sheet', sheetId] })
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to remove share.')
+    }
   }
 
   return (

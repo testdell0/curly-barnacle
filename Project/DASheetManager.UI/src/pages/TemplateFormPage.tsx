@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { Plus, Trash2, ArrowLeft, GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTemplate, useCreateTemplate, useUpdateTemplate } from '@/hooks/useTemplates'
+import { ApiError } from '@/api/client'
 
 const WEIGHTAGE_OPTIONS = [5, 10, 15, 20, 25, 30]
 const DA_TYPES = ['License', 'Custom Development', 'SaaS', 'Consulting', 'Other']
@@ -137,13 +138,11 @@ export function TemplateFormPage() {
 
     toast.success(isEdit ? 'Template updated' : 'Template created')
     navigate('/templates')
-  } catch (err: any) {
+  } catch (err) {
     toast.error('Failed to save template', {
-      description:
-          err?.response?.data?.error ??
-          'An unexpected error occurred',
-      })
-    }
+      description: err instanceof ApiError ? err.message : 'An unexpected error occurred',
+    })
+  }
   }
 
   if (isEdit && loadingExisting) {
