@@ -91,7 +91,7 @@ public class CaptchaService : ICaptchaService
     private static string PadBase64(string s)
     {
         s = s.Replace('-', '+').Replace('_', '/');
-        return s.Length % 4 switch
+        return (s.Length % 4) switch
         {
             2 => s + "==",
             3 => s + "=",
