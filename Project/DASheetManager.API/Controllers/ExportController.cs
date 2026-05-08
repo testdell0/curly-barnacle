@@ -1,3 +1,4 @@
+using DASheetManager.API.Helpers;
 using DASheetManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,11 +10,13 @@ namespace DASheetManager.API.Controllers;
 [Authorize]
 public class ExportController : ControllerBase
 {
-    private readonly IPdfExportService _pdfService;
+    private readonly IPdfExportService           _pdfService;
+    private readonly ILogger<ExportController>   _logger;
 
-    public ExportController(IPdfExportService pdfService)
+    public ExportController(IPdfExportService pdfService, ILogger<ExportController> logger)
     {
         _pdfService = pdfService;
+        _logger     = logger;
     }
 
     private int GetUserId()
@@ -31,6 +34,6 @@ public class ExportController : ControllerBase
             var pdfBytes = await _pdfService.GeneratePdfAsync(sheetId, GetUserId());
             return File(pdfBytes, "application/pdf", $"da-sheet-{sheetId}.pdf");
         }
-        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(ApiErrors.NotFound(ex.Message)); }
     }
 }

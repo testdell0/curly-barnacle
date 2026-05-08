@@ -1,3 +1,4 @@
+using DASheetManager.API.Helpers;
 using DASheetManager.API.Services;
 using DASheetManager.Services.DTOs;
 using DASheetManager.Services.Interfaces;
@@ -10,15 +11,17 @@ namespace DASheetManager.API.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService         _authService;
-    private readonly ILoginAttemptTracker _loginTracker;
-    private readonly ICaptchaService      _captchaService;
+    private readonly IAuthService                  _authService;
+    private readonly ILoginAttemptTracker          _loginTracker;
+    private readonly ICaptchaService               _captchaService;
+    private readonly ILogger<AuthController>       _logger;
 
-    public AuthController(IAuthService authService, ILoginAttemptTracker loginTracker, ICaptchaService captchaService)
+    public AuthController(IAuthService authService, ILoginAttemptTracker loginTracker, ICaptchaService captchaService, ILogger<AuthController> logger)
     {
         _authService    = authService;
         _loginTracker   = loginTracker;
         _captchaService = captchaService;
+        _logger         = logger;
     }
 
     /// <summary>GET /api/auth/captcha — returns a new distorted-image CAPTCHA challenge.</summary>
@@ -38,13 +41,14 @@ public class AuthController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(model.CaptchaToken) ||
             !_captchaService.Validate(model.CaptchaToken, model.CaptchaAnswer ?? ""))
-            return BadRequest(new { error = "Incorrect or expired CAPTCHA. Please try the new image." });
+            return BadRequest(ApiErrors.CaptchaFailed());
 
         if (_loginTracker.IsLockedOut(model.EmployeeCode))
         {
             var msg = _loginTracker.GetLockoutMessage(model.EmployeeCode)
                       ?? "Account temporarily locked. Please try again later.";
-            return Unauthorized(new { error = msg });
+            _logger.LogWarning("Login blocked — account locked out: {EmployeeCode}", model.EmployeeCode);
+            return Unauthorized(ApiErrors.RateLimited(msg));
         }
 
         var result = await _authService.LoginAsync(model);
@@ -53,10 +57,12 @@ public class AuthController : ControllerBase
         {
             _loginTracker.RecordFailure(model.EmployeeCode);
             var lockoutMsg = _loginTracker.GetLockoutMessage(model.EmployeeCode);
-            return Unauthorized(new { error = lockoutMsg ?? result.ErrorMessage ?? "Login failed." });
+            _logger.LogWarning("Failed login attempt for {EmployeeCode}", model.EmployeeCode);
+            return Unauthorized(ApiErrors.RateLimited(lockoutMsg ?? result.ErrorMessage ?? "Invalid credentials."));
         }
 
         _loginTracker.RecordSuccess(model.EmployeeCode);
+        _logger.LogInformation("User {EmployeeCode} logged in", model.EmployeeCode);
 
         // Set JWT in a secure HttpOnly cookie — never visible to JavaScript
         Response.Cookies.Append("da_jwt", result.Token!, new CookieOptions
@@ -111,7 +117,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest model)
     {
         if (model.NewPassword != model.ConfirmNewPassword)
-            return BadRequest(new { error = "New password and confirmation do not match." });
+            return BadRequest(ApiErrors.ValidationError("New password and confirmation do not match."));
 
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
@@ -124,11 +130,11 @@ public class AuthController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { error = ex.Message });
+            return BadRequest(ApiErrors.ValidationError(ex.Message));
         }
 
         if (!success)
-            return BadRequest(new { error = "Current password is incorrect." });
+            return BadRequest(ApiErrors.ValidationError("Current password is incorrect."));
 
         // Refresh the JWT cookie with updated user info (MustChangePassword = false)
         var user = await _authService.GetCurrentUserAsync(userId);

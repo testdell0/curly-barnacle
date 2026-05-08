@@ -1,3 +1,4 @@
+using DASheetManager.API.Helpers;
 using DASheetManager.Services.DTOs;
 using DASheetManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -10,11 +11,13 @@ namespace DASheetManager.API.Controllers;
 [Authorize]
 public class ShareController : ControllerBase
 {
-    private readonly IShareService _shareService;
+    private readonly IShareService             _shareService;
+    private readonly ILogger<ShareController>  _logger;
 
-    public ShareController(IShareService shareService)
+    public ShareController(IShareService shareService, ILogger<ShareController> logger)
     {
         _shareService = shareService;
+        _logger       = logger;
     }
 
     private int GetUserId()
@@ -36,15 +39,16 @@ public class ShareController : ControllerBase
     public async Task<IActionResult> AddShare(int sheetId, [FromBody] CreateShareRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Email))
-            return BadRequest(new { error = "Email is required." });
+            return BadRequest(ApiErrors.ValidationError("Email is required."));
 
         try
         {
             var share = await _shareService.ShareAsync(sheetId, request, GetUserId());
+            _logger.LogInformation("Sheet {SheetId} shared with {Email}", sheetId, request.Email);
             return Ok(new { success = true, share });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>PUT /api/sheets/{sheetId}/shares/{shareId} — Update access level.</summary>
@@ -56,8 +60,8 @@ public class ShareController : ControllerBase
             await _shareService.UpdateAccessAsync(sheetId, shareId, request.AccessLevel, GetUserId());
             return Ok(new { success = true });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>DELETE /api/sheets/{sheetId}/shares/{shareId} — Remove share.</summary>
@@ -69,8 +73,8 @@ public class ShareController : ControllerBase
             await _shareService.RevokeAsync(sheetId, shareId, GetUserId());
             return Ok(new { success = true });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 }
 

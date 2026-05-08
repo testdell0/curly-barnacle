@@ -1,3 +1,4 @@
+using DASheetManager.API.Helpers;
 using DASheetManager.Services.DTOs;
 using DASheetManager.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -67,7 +68,7 @@ public class TemplateController : ControllerBase
     {
         var template = await _templateService.GetByIdAsync(id);
         return template == null
-            ? NotFound(new { error = $"Template {id} not found." })
+            ? NotFound(ApiErrors.NotFound($"Template {id} not found."))
             : Ok(template);
     }
 
@@ -77,26 +78,19 @@ public class TemplateController : ControllerBase
     {
         if (!IsAdmin()) return Forbid();
         if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest(new { error = "Template name is required." });
+            return BadRequest(ApiErrors.ValidationError("Template name is required."));
         if (!request.Categories.Any())
-            return BadRequest(new { error = "At least one category is required." });
+            return BadRequest(ApiErrors.ValidationError("At least one category is required."));
         if (!IsWeightageValid(request.Categories, out var totalWeightage))
-            return BadRequest(new
-            {
-                error = $"Total weightage must be 100%. Current: {totalWeightage}%."
-            });
+            return BadRequest(ApiErrors.ValidationError($"Total weightage must be 100%. Current: {totalWeightage}%."));
 
         try
         {
             var template = await _templateService.CreateAsync(request, GetUserId());
+            _logger.LogInformation("Template {TemplateId} created: {Name}", template.TemplateId, template.Name);
             return Ok(template);
         }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "CreateTemplate failed");
-            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message });
-        }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>PUT /api/templates/{id} — Update template (Draft only).</summary>
@@ -105,22 +99,19 @@ public class TemplateController : ControllerBase
     {
         if (!IsAdmin()) return Forbid();
         if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest(new { error = "Template name is required." });
+            return BadRequest(ApiErrors.ValidationError("Template name is required."));
         if (!request.Categories.Any())
-            return BadRequest(new { error = "At least one category is required." });
+            return BadRequest(ApiErrors.ValidationError("At least one category is required."));
         if (!IsWeightageValid(request.Categories, out var totalWeightage))
-            return BadRequest(new
-            {
-                error = $"Total weightage must be 100%. Current: {totalWeightage}%."
-            });
+            return BadRequest(ApiErrors.ValidationError($"Total weightage must be 100%. Current: {totalWeightage}%."));
 
         try
         {
             var template = await _templateService.UpdateAsync(id, request, GetUserId());
             return Ok(template);
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>DELETE /api/templates/{id} — Delete a Draft template.</summary>
@@ -134,13 +125,8 @@ public class TemplateController : ControllerBase
             await _templateService.DeleteAsync(id, GetUserId());
             return NoContent();
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "DeleteTemplate failed for id={TemplateId}", id);
-            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message });
-        }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>POST /api/templates/{id}/publish — Publish template (validates weightage = 100).</summary>
@@ -152,10 +138,11 @@ public class TemplateController : ControllerBase
         try
         {
             await _templateService.PublishAsync(id, GetUserId());
+            _logger.LogInformation("Template {TemplateId} published", id);
             return Ok(new { message = "Template published." });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 
     /// <summary>POST /api/templates/{id}/unpublish — Revert template to Draft.</summary>
@@ -169,7 +156,7 @@ public class TemplateController : ControllerBase
             await _templateService.UnpublishAsync(id, GetUserId());
             return Ok(new { message = "Template unpublished." });
         }
-        catch (KeyNotFoundException ex)      { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return UnprocessableEntity(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return UnprocessableEntity(ApiErrors.Unprocessable(ex.Message)); }
     }
 }
