@@ -77,7 +77,7 @@ public class SheetController : ControllerBase
         try
         {
             var sheet = await _sheetService.CreateFromTemplateAsync(request, GetUserId());
-            _logger.LogInformation("Sheet {SheetId} created from template {TemplateId}", sheet.SheetId, request.TemplateId);
+            _logger.LogInformation("Sheet {SheetId} created from template {TemplateId}", sheet.SheetId, request.SourceTemplateId);
             return CreatedAtAction(nameof(GetById), new { id = sheet.SheetId }, sheet);
         }
         catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
