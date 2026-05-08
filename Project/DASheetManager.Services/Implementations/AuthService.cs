@@ -199,19 +199,23 @@ public class AuthService : IAuthService
 
         // 2. Remove shares the user created on their own sheets (FK_DA_SHARE_BY RESTRICT)
         var sharesAsOwner = await _uow.SharedAccess.Query()
-            .Where(sa => sa.SharedByUser == userId)
+            .Where(sa => sa.SharedBy == userId)
             .ToListAsync();
         foreach (var s in sharesAsOwner) _uow.SharedAccess.Remove(s);
 
-        // 3. Delete all sheets owned by this user.
-        //    DB cascades (ON DELETE CASCADE) handle child rows:
-        //    categories, params, vendors, evaluations, audit logs.
+        // 3. Delete all sheets owned by this user (DB cascades handle child rows)
         var sheets = await _uow.Sheets.Query()
             .Where(s => s.CreatedBy == userId)
             .ToListAsync();
         foreach (var sheet in sheets) _uow.Sheets.Remove(sheet);
 
-        // 4. Delete the user
+        // 4. Delete audit log entries performed by this user (FK_DA_AUDIT_USER RESTRICT)
+        var auditLogs = await _uow.AuditLogs.Query()
+            .Where(al => al.PerformedBy == userId)
+            .ToListAsync();
+        foreach (var log in auditLogs) _uow.AuditLogs.Remove(log);
+
+        // 5. Delete the user
         _uow.Users.Remove(user);
         await _uow.SaveChangesAsync();
     }
