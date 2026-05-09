@@ -108,6 +108,29 @@ public class AuthController : ControllerBase
         return Ok(user);
     }
 
+    /// <summary>PUT /api/auth/profile — update the current user's own profile info.</summary>
+    [HttpPut("profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest model)
+    {
+        if (string.IsNullOrWhiteSpace(model.FirstName) ||
+            string.IsNullOrWhiteSpace(model.LastName) ||
+            string.IsNullOrWhiteSpace(model.Email))
+            return BadRequest(ApiErrors.ValidationError("FirstName, LastName, and Email are required."));
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        try
+        {
+            var dto = await _authService.UpdateProfileAsync(userId, model);
+            return Ok(dto);
+        }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return Conflict(ApiErrors.Conflict(ex.Message)); }
+    }
+
     /// <summary>
     /// POST /api/auth/change-password
     /// Changes the current user's password. Clears the MustChangePassword flag.

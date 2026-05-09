@@ -12,6 +12,7 @@ import { TemplateFormPage } from './pages/TemplateFormPage'
 import { SheetsPage } from './pages/SheetsPage'
 import { CreateSheetPage } from './pages/CreateSheetPage'
 import { SheetDetailPage } from './pages/SheetDetailPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { SessionLoader } from './components/SessionLoader'
 
 const queryClient = new QueryClient({
@@ -41,6 +42,7 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
 
                 {/* {/* DA Sheets */}
                 <Route path="/sheets" element={<SheetsPage />} />

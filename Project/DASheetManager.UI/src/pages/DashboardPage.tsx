@@ -17,12 +17,12 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, color }: StatCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-4">
       <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0', color)}>
         {icon}
       </div>
       <div>
-        <div className="text-2xl font-bold text-gray-900">
+        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           {value === undefined ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" /> : value}
         </div>
         <div className="text-sm text-gray-500">{label}</div>
@@ -60,7 +60,7 @@ export function DashboardPage() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Greeting */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Welcome back, {user?.fullName?.split(' ')[0] ?? 'User'}
         </h1>
         <p className="text-sm text-gray-500 mt-0.5">
@@ -110,12 +110,12 @@ export function DashboardPage() {
       {/* Recent Sheets */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Recent DA Sheets</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent DA Sheets</h2>
           <Link to="/sheets" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
             View all
           </Link>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           {recentLoading && (
             <div className="flex items-center justify-center py-12 text-gray-400">
               <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading recent sheets…
@@ -142,36 +142,36 @@ export function DashboardPage() {
 
           {!recentLoading && !recentError && (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Name</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Template</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Creator</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Updated</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide"></th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Name</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Template</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Creator</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Updated</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {(!recent || recent.length === 0) && (
                   <tr>
-                    <td colSpan={6} className="text-center py-10 text-gray-400">
+                    <td colSpan={6} className="text-center py-10 text-gray-400 dark:text-gray-500">
                       No DA sheets yet.
                     </td>
                   </tr>
                 )}
                 {recent?.map((sheet) => (
-                  <tr key={sheet.sheetId} className="hover:bg-gray-50 transition-colors">
+                  <tr key={sheet.sheetId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{sheet.name}</div>
-                      <div className="text-xs text-gray-400">{sheet.daType} · v{sheet.version}</div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{sheet.name}</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">{sheet.daType} · v{sheet.version}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{sheet.templateName}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{sheet.templateName}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={sheet.status as RecentSheet['status']} />
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{sheet.creatorName}</td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{sheet.creatorName}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-500">
                       {new Date(sheet.updatedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">

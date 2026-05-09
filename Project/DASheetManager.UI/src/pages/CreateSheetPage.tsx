@@ -48,20 +48,20 @@ export function CreateSheetPage() {
       </div>
 
       {/* Sheet Name */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Sheet Name</label>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 mb-6">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sheet Name</label>
         <input
           type="text"
           value={sheetName}
           onChange={(e) => setSheetName(e.target.value)}
-          className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="e.g. Q1 2026 SaaS Vendor Evaluation"
         />
       </div>
 
       {/* Template Selection */}
       <div className="mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
           Choose Template
         </h2>
         {loadingTemplates ? (
@@ -80,12 +80,12 @@ export function CreateSheetPage() {
                 className={cn(
                   'text-left p-4 border rounded-xl transition-all',
                   selectedTemplateId === t.templateId
-                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                    : 'border-gray-200 bg-white hover:border-gray-300',
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-200 dark:ring-blue-800'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600',
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900 text-sm">{t.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">{t.name}</span>
                   {selectedTemplateId === t.templateId && (
                     <Check className="w-4 h-4 text-blue-600" />
                   )}
@@ -104,8 +104,8 @@ export function CreateSheetPage() {
 
       {/* Template Preview */}
       {templateDetail && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 mb-6">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
             Template Preview: {templateDetail.name}
           </h2>
           <div className="space-y-3">

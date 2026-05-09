@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { authApi } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { useAuthStore } from '@/store/authStore'
-import type { ChangePasswordRequest, LoginRequest } from '@/types/da-types'
+import type { ChangePasswordRequest, LoginRequest, UpdateProfileRequest } from '@/types/da-types'
 
 /**
  * Restores session on app load by calling GET /api/auth/me.
@@ -72,6 +72,15 @@ export function useLogout() {
       qc.clear()
       navigate('/login')
     },
+  })
+}
+
+export function useUpdateProfile() {
+  const setUser = useAuthStore((s) => s.setUser)
+
+  return useMutation({
+    mutationFn: (body: UpdateProfileRequest) => authApi.updateProfile(body),
+    onSuccess: (updated) => setUser(updated),
   })
 }
 

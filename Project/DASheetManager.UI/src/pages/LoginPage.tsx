@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, RefreshCw } from 'lucide-react'
+import { Loader2, RefreshCw, BookOpenCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLogin } from '@/hooks/useAuth'
 import { authApi } from '@/api/auth'
@@ -75,25 +75,39 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900">
+      {/* Diagonal line texture overlay */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.07]"
+        aria-hidden="true"
+      >
+        <defs>
+          <pattern id="diagonal-lines" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+            <path d="M 24 0 L 0 24" stroke="white" strokeWidth="1" fill="none" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#diagonal-lines)" />
+      </svg>
+
+      {/* Decorative blurred blobs */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-indigo-600/20 blur-3xl pointer-events-none" />
+
+      <div className="relative w-full max-w-md px-4">
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4 shadow-lg shadow-blue-600/30">
+              <BookOpenCheck className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">DA Sheet Manager</h1>
-            <p className="text-sm text-gray-500 mt-1">Sign in to your account</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">DA Sheet Manager</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Sign in to your account</p>
           </div>
 
           {/* Error banner */}
           {serverError && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">
               {serverError}
             </div>
           )}
@@ -101,7 +115,7 @@ export function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Employee Code */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Employee Code
               </label>
               <input
@@ -110,8 +124,11 @@ export function LoginPage() {
                 autoComplete="username"
                 className={cn(
                   'w-full px-3 py-2 rounded-lg border text-sm transition-colors',
+                  'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                  errors.employeeCode ? 'border-red-400' : 'border-gray-300',
+                  errors.employeeCode
+                    ? 'border-red-400 dark:border-red-500'
+                    : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.employeeCode && (
@@ -121,7 +138,7 @@ export function LoginPage() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Password
               </label>
               <input
@@ -131,8 +148,11 @@ export function LoginPage() {
                 autoComplete="current-password"
                 className={cn(
                   'w-full px-3 py-2 rounded-lg border text-sm transition-colors',
+                  'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                  errors.password ? 'border-red-400' : 'border-gray-300',
+                  errors.password
+                    ? 'border-red-400 dark:border-red-500'
+                    : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.password && (
@@ -142,11 +162,11 @@ export function LoginPage() {
 
             {/* CAPTCHA */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Security check
               </label>
               <div className="flex items-center gap-2 mb-2">
-                <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-50 select-none">
+                <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 select-none">
                   {captchaImage ? (
                     <img
                       src={captchaImage}
@@ -155,7 +175,7 @@ export function LoginPage() {
                       draggable={false}
                     />
                   ) : (
-                    <div className="h-[60px] w-[200px] animate-pulse bg-gray-200" />
+                    <div className="h-[60px] w-[200px] animate-pulse bg-gray-200 dark:bg-gray-700" />
                   )}
                 </div>
                 <button
@@ -163,7 +183,7 @@ export function LoginPage() {
                   onClick={fetchCaptcha}
                   disabled={captchaLoading}
                   title="Get new image"
-                  className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-40"
+                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors disabled:opacity-40"
                 >
                   <RefreshCw className={cn('w-4 h-4', captchaLoading && 'animate-spin')} />
                 </button>
@@ -175,8 +195,11 @@ export function LoginPage() {
                 autoComplete="off"
                 className={cn(
                   'w-full px-3 py-2 rounded-lg border text-sm tracking-widest uppercase transition-colors',
+                  'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                  captchaError ? 'border-red-400' : 'border-gray-300',
+                  captchaError
+                    ? 'border-red-400 dark:border-red-500'
+                    : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {captchaError && (
@@ -190,7 +213,7 @@ export function LoginPage() {
               disabled={isSubmitting || login.isPending}
               className={cn(
                 'w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium',
-                'bg-blue-600 text-white hover:bg-blue-700 transition-colors',
+                'bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-md shadow-blue-600/20',
                 'disabled:opacity-60 disabled:cursor-not-allowed',
               )}
             >
@@ -200,7 +223,7 @@ export function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-blue-200/60 mt-4">
           DA Sheet Manager &copy; {new Date().getFullYear()}
         </p>
       </div>

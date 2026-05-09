@@ -142,17 +142,17 @@ export function SheetsPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Name</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Type</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Template</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Created By</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Updated</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+                <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Name</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Type</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Template</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Created By</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Updated</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,9 +160,9 @@ export function SheetsPage() {
                   const isOwner = s.createdBy === currentUser?.userId
                   const isDraft = s.status === 'Draft'
                   return (
-                    <tr key={s.sheetId} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-900">{s.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{s.daType}</td>
+                    <tr key={s.sheetId} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{s.name}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{s.daType}</td>
                       <td className="px-4 py-3">
                         <span
                           className={cn(
@@ -175,9 +175,9 @@ export function SheetsPage() {
                           {s.status} {s.version > 1 && `v${s.version}`}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{s.sourceTemplateName}</td>
-                      <td className="px-4 py-3 text-gray-600">{s.createdByName}</td>
-                      <td className="px-4 py-3 text-gray-500">
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{s.sourceTemplateName}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{s.createdByName}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-500">
                         {new Date(s.updatedAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
@@ -297,10 +297,10 @@ function ConfirmDeleteModal({
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onCancel} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Delete Sheet</h3>
-            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Delete Sheet</h3>
+            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <X className="w-5 h-5" />
             </button>
           </div>

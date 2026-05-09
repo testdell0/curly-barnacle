@@ -40,8 +40,8 @@ export function TemplatesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Templates</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Templates</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Manage evaluation templates with categories and judgment parameters
           </p>
         </div>
@@ -61,7 +61,7 @@ export function TemplatesPage() {
           placeholder="Search templates..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full max-w-sm px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
@@ -71,23 +71,23 @@ export function TemplatesPage() {
       ) : !filtered?.length ? (
         <div className="text-center py-12 text-gray-500">No templates found</div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Name</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">DA Type</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Created By</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Updated</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+              <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Name</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">DA Type</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Status</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Created By</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Updated</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((t) => (
-                <tr key={t.templateId} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-gray-900">{t.name}</td>
-                  <td className="px-4 py-3 text-gray-600">{t.daType}</td>
+                <tr key={t.templateId} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{t.name}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{t.daType}</td>
                   <td className="px-4 py-3">
                     <span
                       className={cn(
@@ -100,8 +100,8 @@ export function TemplatesPage() {
                       {t.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{t.createdByName}</td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{t.createdByName}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-500">
                     {new Date(t.updatedAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
@@ -179,14 +179,14 @@ function ConfirmDeleteModal({
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onCancel} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Delete Template</h3>
-            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Delete Template</h3>
+            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Are you sure you want to delete <span className="font-medium text-gray-900">"{name}"</span>?
             This cannot be undone.
           </p>
