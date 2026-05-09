@@ -75,27 +75,26 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900">
-      {/* Diagonal line texture overlay */}
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      {/* Geometric diamond grid overlay */}
       <svg
-        className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.07]"
+        className="absolute inset-0 w-full h-full pointer-events-none"
         aria-hidden="true"
       >
         <defs>
-          <pattern id="diagonal-lines" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-            <path d="M 24 0 L 0 24" stroke="white" strokeWidth="1" fill="none" />
+          <pattern id="iso-grid" x="0" y="0" width="60" height="34.64" patternUnits="userSpaceOnUse">
+            <path d="M30 0 L60 17.32 L30 34.64 L0 17.32 Z" fill="none" stroke="#3b82f6" strokeWidth="0.7" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#diagonal-lines)" />
+        <rect width="100%" height="100%" fill="url(#iso-grid)" opacity="0.15" />
       </svg>
 
-      {/* Decorative blurred blobs */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-indigo-600/20 blur-3xl pointer-events-none" />
+      {/* Soft blue glow top-left */}
+      <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-blue-200/40 dark:bg-blue-900/20 blur-3xl pointer-events-none" />
 
       <div className="relative w-full max-w-md px-4">
         {/* Card */}
-        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4 shadow-lg shadow-blue-600/30">

@@ -1,4 +1,4 @@
-import { FileText, CheckCircle, LayoutTemplate, Users, TrendingUp, Loader2, Eye } from 'lucide-react'
+import { FileText, CheckCircle, LayoutTemplate, Users, FilePen, Loader2, Eye } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useDashboardStats, useRecentSheets } from '@/hooks/useDashboard'
@@ -80,7 +80,7 @@ export function DashboardPage() {
         <StatCard
           label="Draft"
           value={statsLoading ? undefined : stats?.draftSheets}
-          icon={<TrendingUp className="w-6 h-6 text-gray-500" />}
+          icon={<FilePen className="w-6 h-6 text-gray-500" />}
           color="bg-gray-50"
         />
         <StatCard

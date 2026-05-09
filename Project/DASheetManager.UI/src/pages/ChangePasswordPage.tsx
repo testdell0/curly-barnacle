@@ -70,7 +70,7 @@ export function ChangePasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
 
           <div className="flex items-center mb-4">
             <button
@@ -80,11 +80,11 @@ export function ChangePasswordPage() {
               className={cn('p-2 rounded-lg transition',
                 user?.mustChangePassword
                 ? 'opacity-40 cursor-not-allowed'
-                : 'hover:bg-gray-100'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
               )}
               title='Back to dashboard'
             >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
+              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
           </div>
 
@@ -92,7 +92,7 @@ export function ChangePasswordPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500 mb-4">
               <KeyRound className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Change Password</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Change Password</h1>
             {user?.mustChangePassword && (
               <p className="text-sm text-amber-600 mt-1 font-medium">
                 You must set a new password before continuing.
@@ -101,28 +101,28 @@ export function ChangePasswordPage() {
           </div>
 
           {serverError && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">
               {serverError}
             </div>
           )}
 
           {success && (
-            <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">
+            <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-400">
               Password changed successfully. Redirecting…
             </div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
               <input
                 {...register('currentPassword')}
                 type="password"
                 autoComplete="current-password"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border text-sm',
+                  'w-full px-3 py-2 rounded-lg border text-sm dark:bg-gray-800 dark:text-gray-100',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                  errors.currentPassword ? 'border-red-400' : 'border-gray-300',
+                  errors.currentPassword ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.currentPassword && (
@@ -131,15 +131,15 @@ export function ChangePasswordPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
               <input
                 {...register('newPassword')}
                 type="password"
                 autoComplete="new-password"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border text-sm',
+                  'w-full px-3 py-2 rounded-lg border text-sm dark:bg-gray-800 dark:text-gray-100',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                  errors.newPassword ? 'border-red-400' : 'border-gray-300',
+                  errors.newPassword ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.newPassword && (
@@ -149,15 +149,15 @@ export function ChangePasswordPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
               <input
                 {...register('confirmNewPassword')}
                 type="password"
                 autoComplete="new-password"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border text-sm',
+                  'w-full px-3 py-2 rounded-lg border text-sm dark:bg-gray-800 dark:text-gray-100',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                  errors.confirmNewPassword ? 'border-red-400' : 'border-gray-300',
+                  errors.confirmNewPassword ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.confirmNewPassword && (
