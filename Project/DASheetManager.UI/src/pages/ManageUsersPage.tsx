@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, Search, Loader2, RotateCcw, Power, PowerOff, Trash2, X } from 'lucide-react'
+import { UserPlus, Search, Loader2, RotateCcw, Power, PowerOff, Trash2, X, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { useUsers, useCreateUser, useToggleUserActive, useResetPassword, useDeleteUser } from '@/hooks/useUsers'
+import { useUsers, useCreateUser, useEditUser, useToggleUserActive, useResetPassword, useDeleteUser } from '@/hooks/useUsers'
 import { useAuthStore } from '@/store/authStore'
 import { ApiError } from '@/api/client'
 import type { UserListItem } from '@/types/da-types'
@@ -22,6 +22,17 @@ const createSchema = z.object({
 })
 
 type CreateFormValues = z.infer<typeof createSchema>
+
+// ── Edit User form schema ──────────────────────────────────────────────────
+
+const editSchema = z.object({
+  firstName: z.string().min(1, 'Required').transform((v) => v.trim()),
+  lastName: z.string().min(1, 'Required').transform((v) => v.trim()),
+  email: z.string().email('Invalid email').transform((v) => v.trim()),
+  role: z.enum(['User', 'Admin']),
+})
+
+type EditFormValues = z.infer<typeof editSchema>
 
 // ── Reset Password form schema ─────────────────────────────────────────────
 
@@ -197,6 +208,121 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+// ── Edit User Modal ────────────────────────────────────────────────────────
+
+function EditUserModal({ user, onClose }: { user: UserListItem; onClose: () => void }) {
+  const editUser = useEditUser()
+  const [serverError, setServerError] = useState<string | null>(null)
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<EditFormValues>({
+    resolver: zodResolver(editSchema),
+    defaultValues: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+    },
+  })
+
+  async function onSubmit(values: EditFormValues) {
+    setServerError(null)
+    try {
+      await editUser.mutateAsync({ userId: user.userId, body: values })
+      toast.success('User updated.')
+      onClose()
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : 'Failed to update user.'
+      setServerError(msg)
+      toast.error(msg)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 m-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Edit User</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{user.employeeCode}</p>
+
+        {serverError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+            {serverError}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
+              <input
+                {...register('firstName')}
+                className={cn(
+                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600',
+                  errors.firstName ? 'border-red-400' : 'border-gray-300',
+                )}
+              />
+              {errors.firstName && <p className="mt-1 text-xs text-red-600">{errors.firstName.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
+              <input
+                {...register('lastName')}
+                className={cn(
+                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600',
+                  errors.lastName ? 'border-red-400' : 'border-gray-300',
+                )}
+              />
+              {errors.lastName && <p className="mt-1 text-xs text-red-600">{errors.lastName.message}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <input
+              {...register('email')}
+              type="email"
+              className={cn(
+                'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600',
+                errors.email ? 'border-red-400' : 'border-gray-300',
+              )}
+            />
+            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+            <select
+              {...register('role')}
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="User">User</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || editUser.isPending}
+              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
+            >
+              {(isSubmitting || editUser.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ── Reset Password Modal ───────────────────────────────────────────────────
 
 function ResetPasswordModal({ user, onClose }: { user: UserListItem; onClose: () => void }) {
@@ -289,6 +415,7 @@ export function ManageUsersPage() {
 
   const [search, setSearch] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editTarget, setEditTarget] = useState<UserListItem | null>(null)
   const [resetTarget, setResetTarget] = useState<UserListItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<UserListItem | null>(null)
 
@@ -357,7 +484,7 @@ export function ManageUsersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         {isLoading && (
           <div className="flex items-center justify-center py-16 text-gray-400">
             <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading users…
@@ -372,17 +499,17 @@ export function ManageUsersPage() {
 
         {!isLoading && !error && (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">User</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Email</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Role</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Created</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Actions</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">User</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Email</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Role</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Created</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="text-center py-10 text-gray-400">
@@ -391,17 +518,17 @@ export function ManageUsersPage() {
                 </tr>
               )}
               {filtered.map((u) => (
-                <tr key={u.userId} className="hover:bg-gray-50 transition-colors">
+                <tr key={u.userId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{u.fullName}</div>
-                    <div className="text-xs text-gray-500">{u.employeeCode}</div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{u.fullName}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">{u.employeeCode}</div>
                     {u.mustChangePassword && (
                       <span className="inline-block mt-0.5 text-[10px] text-amber-600 font-medium">
                         Must change password
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{u.email}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{u.email}</td>
                   <td className="px-4 py-3"><RoleBadge role={u.role} /></td>
                   <td className="px-4 py-3"><StatusBadge isActive={u.isActive} /></td>
                   <td className="px-4 py-3 text-gray-500">
@@ -409,6 +536,15 @@ export function ManageUsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
+                      {/* Edit User */}
+                      <button
+                        onClick={() => setEditTarget(u)}
+                        title="Edit user"
+                        className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+
                       {/* Reset Password */}
                       <button
                         onClick={() => setResetTarget(u)}
@@ -455,6 +591,7 @@ export function ManageUsersPage() {
 
       {/* Modals */}
       {showAddModal && <AddUserModal onClose={() => setShowAddModal(false)} />}
+      {editTarget && <EditUserModal user={editTarget} onClose={() => setEditTarget(null)} />}
       {resetTarget && <ResetPasswordModal user={resetTarget} onClose={() => setResetTarget(null)} />}
       {deleteTarget && (
         <ConfirmDeleteModal
@@ -482,10 +619,10 @@ function ConfirmDeleteModal({
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onCancel} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Delete User</h3>
-            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Delete User</h3>
+            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <X className="w-5 h-5" />
             </button>
           </div>

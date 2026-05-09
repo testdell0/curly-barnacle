@@ -159,23 +159,23 @@ export function TemplateFormPage() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-semibold text-gray-900">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           {isEdit ? 'Edit Template' : 'Create Template'}
         </h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit, onSubmitError)} className="space-y-6">
         {/* Basic Info */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
             Basic Information
           </h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template Name</label>
               <input
                 {...register('name')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 // placeholder="e.g. SaaS Vendor Evaluation"
                 placeholder="Enter Template Name"
               />
@@ -184,10 +184,10 @@ export function TemplateFormPage() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DA Type</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">DA Type</label>
               <select
                 {...register('daType')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select type...</option>
                 {DA_TYPES.map((t) => (
@@ -202,11 +202,11 @@ export function TemplateFormPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
             <textarea
               {...register('description')}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               placeholder="Optional description..."
             />
           </div>
@@ -324,13 +324,13 @@ function CategoryCard({
   const catErrors = errors.categories?.[catIndex]
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GripVertical className="w-4 h-4 text-gray-300" />
+          <GripVertical className="w-4 h-4 text-gray-300 dark:text-gray-600" />
           <input
             {...register(`categories.${catIndex}.name`)}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Category name (e.g. Quality)"
           />
           {catErrors?.name && (
@@ -361,7 +361,7 @@ function CategoryCard({
             <GripVertical className="w-4 h-4 text-gray-200 flex-shrink-0" />
             <input
               {...register(`categories.${catIndex}.parameters.${paramIndex}.name`)}
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Parameter name"
             />
             {catErrors?.parameters?.[paramIndex]?.name && (

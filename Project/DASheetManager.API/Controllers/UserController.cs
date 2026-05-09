@@ -57,6 +57,27 @@ public class UserController : ControllerBase
         }
     }
 
+    /// <summary>PUT /api/users/{id} — update user info (Admin only)</summary>
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest request)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        if (string.IsNullOrWhiteSpace(request.FirstName) ||
+            string.IsNullOrWhiteSpace(request.LastName) ||
+            string.IsNullOrWhiteSpace(request.Email))
+            return BadRequest(ApiErrors.ValidationError("FirstName, LastName, and Email are required."));
+
+        try
+        {
+            var user = await _authService.UpdateUserAsync(id, request);
+            _logger.LogInformation("User {UserId} updated by admin", id);
+            return Ok(user);
+        }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiErrors.NotFound(ex.Message)); }
+        catch (InvalidOperationException ex) { return Conflict(ApiErrors.Conflict(ex.Message)); }
+    }
+
     /// <summary>DELETE /api/users/{id} — delete user (Admin only)</summary>
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)

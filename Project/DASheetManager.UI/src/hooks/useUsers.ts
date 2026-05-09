@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { usersApi } from '@/api/users'
-import type { AdminResetPasswordRequest, CreateUserRequest } from '@/types/da-types'
+import type { AdminResetPasswordRequest, CreateUserRequest, UpdateUserRequest } from '@/types/da-types'
 
 const USERS_KEY = ['users'] as const
 
@@ -31,6 +31,15 @@ export function useResetPassword() {
   return useMutation({
     mutationFn: ({ userId, body }: { userId: number; body: AdminResetPasswordRequest }) =>
       usersApi.resetPassword(userId, body),
+  })
+}
+
+export function useEditUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, body }: { userId: number; body: UpdateUserRequest }) =>
+      usersApi.update(userId, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: USERS_KEY }),
   })
 }
 

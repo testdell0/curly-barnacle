@@ -11,6 +11,8 @@ public interface IAuthService
     Task AdminResetPasswordAsync(int targetUserId, string tempPassword);
     Task<List<UserListDto>> GetAllUsersAsync();
     Task<UserListDto> CreateUserAsync(CreateUserRequest request);
+    Task<UserListDto> UpdateUserAsync(int userId, UpdateUserRequest request);
+    Task<CurrentUserDto> UpdateProfileAsync(int userId, UpdateProfileRequest request);
     Task ToggleUserActiveAsync(int userId);
     Task DeleteUserAsync(int userId);
 }

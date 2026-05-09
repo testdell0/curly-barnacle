@@ -194,6 +194,59 @@ public class AuthService : IAuthService
         return MapToListDto(user);
     }
 
+    public async Task<UserListDto> UpdateUserAsync(int userId, UpdateUserRequest request)
+    {
+        var user = await _uow.Users.GetByIdAsync(userId)
+            ?? throw new KeyNotFoundException("User not found.");
+
+        if (!string.Equals(user.Email, request.Email.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            var collision = await _uow.Users.FindAsync(u => u.Email == request.Email.Trim() && u.UserId != userId);
+            if (collision.Any())
+                throw new InvalidOperationException($"Email '{request.Email}' is already in use by another account.");
+        }
+
+        user.FirstName = request.FirstName.Trim();
+        user.LastName  = request.LastName.Trim();
+        user.Email     = request.Email.Trim();
+        user.Role      = request.Role == "Admin" ? "Admin" : "User";
+        user.UpdatedAt = DateTime.UtcNow;
+
+        try { await _uow.SaveChangesAsync(); }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException($"Email '{request.Email}' is already in use.");
+        }
+
+        return MapToListDto(user);
+    }
+
+    public async Task<CurrentUserDto> UpdateProfileAsync(int userId, UpdateProfileRequest request)
+    {
+        var user = await _uow.Users.GetByIdAsync(userId)
+            ?? throw new KeyNotFoundException("User not found.");
+
+        if (!string.Equals(user.Email, request.Email.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            var collision = await _uow.Users.FindAsync(u => u.Email == request.Email.Trim() && u.UserId != userId);
+            if (collision.Any())
+                throw new InvalidOperationException($"Email '{request.Email}' is already in use by another account.");
+        }
+
+        user.FirstName = request.FirstName.Trim();
+        user.LastName  = request.LastName.Trim();
+        user.Email     = request.Email.Trim();
+        user.UpdatedAt = DateTime.UtcNow;
+
+        try { await _uow.SaveChangesAsync(); }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new InvalidOperationException($"Email '{request.Email}' is already in use.");
+        }
+
+        return MapToDto(user);
+    }
+
     public async Task ToggleUserActiveAsync(int userId)
     {
         var user = await _uow.Users.GetByIdAsync(userId)

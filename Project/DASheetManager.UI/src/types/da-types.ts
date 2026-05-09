@@ -50,6 +50,19 @@ export interface AdminResetPasswordRequest {
   tempPassword: string
 }
 
+export interface UpdateUserRequest {
+  firstName: string
+  lastName: string
+  email: string
+  role: 'Admin' | 'User'
+}
+
+export interface UpdateProfileRequest {
+  firstName: string
+  lastName: string
+  email: string
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────
 
 export interface DashboardStats {
