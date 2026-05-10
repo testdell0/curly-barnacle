@@ -93,8 +93,8 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 m-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-5">Add New User</h2>
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 m-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-5">Add New User</h2>
 
         {serverError && (
           <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
@@ -105,23 +105,23 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Employee Code</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Employee Code</label>
               <input
                 {...register('employeeCode')}
                 placeholder="E.code"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                  errors.employeeCode ? 'border-red-400' : 'border-gray-300',
+                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                  errors.employeeCode ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.employeeCode && <p className="mt-1 text-xs text-red-600">{errors.employeeCode.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
               <select
                 {...register('role')}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="User">User</option>
                 <option value="Admin">Admin</option>
@@ -131,25 +131,25 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
               <input
                 {...register('firstName')}
                 placeholder="First name"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                  errors.firstName ? 'border-red-400' : 'border-gray-300',
+                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                  errors.firstName ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.firstName && <p className="mt-1 text-xs text-red-600">{errors.firstName.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
               <input
                 {...register('lastName')}
                 placeholder="Last name"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                  errors.lastName ? 'border-red-400' : 'border-gray-300',
+                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                  errors.lastName ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.lastName && <p className="mt-1 text-xs text-red-600">{errors.lastName.message}</p>}
@@ -157,39 +157,39 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
             <input
               {...register('email')}
               type="email"
               placeholder="Email Address"
               className={cn(
-                'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                errors.email ? 'border-red-400' : 'border-gray-300',
+                'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                errors.email ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
               )}
             />
             {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Temporary Password</label>
             <input
               {...register('tempPassword')}
               type="password"
               placeholder="Temporary password"
               className={cn(
-                'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                errors.tempPassword ? 'border-red-400' : 'border-gray-300',
+                'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                errors.tempPassword ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
               )}
             />
             {errors.tempPassword && <p className="mt-1 text-xs text-red-600">{errors.tempPassword.message}</p>}
-            <p className="mt-1 text-xs text-gray-400">User will be required to change on first login.</p>
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">User will be required to change on first login.</p>
           </div>
 
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex-1 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Cancel
             </button>
@@ -350,9 +350,9 @@ function ResetPasswordModal({ user, onClose }: { user: UserListItem; onClose: ()
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 m-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Reset Password</h2>
-        <p className="text-sm text-gray-500 mb-4">{user.fullName} ({user.employeeCode})</p>
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 m-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Reset Password</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{user.fullName} ({user.employeeCode})</p>
 
         {serverError && (
           <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
@@ -368,13 +368,13 @@ function ResetPasswordModal({ user, onClose }: { user: UserListItem; onClose: ()
         {!done && (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Temporary Password</label>
               <input
                 {...register('tempPassword')}
                 type="password"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                  errors.tempPassword ? 'border-red-400' : 'border-gray-300',
+                  'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                  errors.tempPassword ? 'border-red-400' : 'border-gray-300 dark:border-gray-600',
                 )}
               />
               {errors.tempPassword && <p className="mt-1 text-xs text-red-600">{errors.tempPassword.message}</p>}
@@ -382,7 +382,7 @@ function ResetPasswordModal({ user, onClose }: { user: UserListItem; onClose: ()
 
             <div className="flex gap-3">
               <button type="button" onClick={onClose}
-                className="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                className="flex-1 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 Cancel
               </button>
               <button type="submit" disabled={isSubmitting || resetPw.isPending}
@@ -396,7 +396,7 @@ function ResetPasswordModal({ user, onClose }: { user: UserListItem; onClose: ()
 
         {done && (
           <button onClick={onClose}
-            className="w-full py-2 rounded-lg bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200">
+            className="w-full py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
             Close
           </button>
         )}

@@ -13,6 +13,7 @@ import {
   Moon,
   Sun,
   User,
+  KeyRound,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
@@ -156,8 +157,9 @@ export function AppShell() {
                   {/* Change Password */}
                   <button
                     onClick={() => { setUserMenuOpen(false); navigate('/change-password') }}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
                   >
+                    <KeyRound className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                     Change Password
                   </button>
 

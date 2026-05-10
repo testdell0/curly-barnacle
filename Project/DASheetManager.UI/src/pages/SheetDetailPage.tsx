@@ -326,7 +326,7 @@ export function SheetDetailPage() {
           <div>
             <div className="font-semibold text-amber-800">Top Recommendation</div>
             <div className="text-sm text-amber-700">
-              {winner.vendorName} — Overall Score: {winner.overallScore.toFixed(2)}
+              {winner.vendorName} — Overall Score: {winner.overallScore.toFixed(0)}
             </div>
           </div>
         </div>
@@ -500,7 +500,7 @@ export function SheetDetailPage() {
                           savedScore?.isWinner ? 'bg-amber-100 text-amber-900' : '',
                         )}
                       >
-                        {liveTotal.toFixed(2)}
+                        {liveTotal.toFixed(0)}
                       </td>
                     </Fragment>
                   )
@@ -611,7 +611,7 @@ function CatBlock({
               <Fragment key={v.vendorId}>
                 <td colSpan={2} className="border border-gray-200 bg-gray-50" />
                 <td className="px-3 py-2 text-center border border-gray-200 text-xs font-semibold">
-                  {subtotal.toFixed(2)}
+                  {subtotal.toFixed(0)}
                 </td>
               </Fragment>
             )
@@ -714,18 +714,18 @@ function ConfirmModal({
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onCancel} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+            <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-sm text-gray-600">{message}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
           <div className="flex justify-end gap-2 pt-2">
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Cancel
             </button>
@@ -792,10 +792,10 @@ function ShareModal({
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Share Sheet</h3>
-            <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Share Sheet</h3>
+            <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -806,7 +806,7 @@ function ShareModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="User email..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               onClick={handleShare}
@@ -818,18 +818,18 @@ function ShareModal({
           </div>
 
           {localShares.length > 0 && (
-            <div className="border-t border-gray-100 pt-3">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Shared With</h4>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Shared With</h4>
               <ul className="space-y-2 max-h-48 overflow-y-auto">
                 {localShares.map((s) => (
                   <li key={s.shareId} className="flex items-center justify-between text-sm">
                     <div>
-                      <span className="text-gray-900">{s.sharedWithName ?? s.sharedWithEmail}</span>
-                      <span className="ml-2 text-xs text-gray-400 capitalize">{s.accessLevel}</span>
+                      <span className="text-gray-900 dark:text-gray-100">{s.sharedWithName ?? s.sharedWithEmail}</span>
+                      <span className="ml-2 text-xs text-gray-400 dark:text-gray-500 capitalize">{s.accessLevel}</span>
                     </div>
                     <button
                       onClick={() => handleRemoveShare(s.shareId)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
