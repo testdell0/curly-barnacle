@@ -23,6 +23,7 @@ public class DASheetService : IDASheetService
             .Include(s => s.Categories).ThenInclude(c => c.Parameters)
             .Include(s => s.Vendors).ThenInclude(v => v.Evaluations)
             .Include(s => s.SharedAccess).ThenInclude(sa => sa.SharedWithUserNav)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(s => s.SheetId == sheetId);
 
         if (sheet == null) return null;
@@ -165,6 +166,7 @@ public class DASheetService : IDASheetService
         var source = await _uow.Sheets.Query()
             .Include(s => s.Categories).ThenInclude(c => c.Parameters)
             .Include(s => s.Vendors).ThenInclude(v => v.Evaluations)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(s => s.SheetId == sheetId);
 
         if (source == null) throw new KeyNotFoundException($"Sheet {sheetId} not found.");
@@ -222,6 +224,7 @@ public class DASheetService : IDASheetService
         var newSheetFull = await _uow.Sheets.Query()
             .Include(s => s.Categories).ThenInclude(c => c.Parameters)
             .Include(s => s.Vendors)
+            .AsSplitQuery()
             .FirstAsync(s => s.SheetId == newSheet.SheetId);
 
         var paramMap = new Dictionary<int, int>();

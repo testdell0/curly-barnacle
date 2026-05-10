@@ -60,15 +60,22 @@ export function AppShell() {
         )}
       >
         {/* Sidebar header */}
-        <div className="flex items-center gap-2 px-3 py-4 border-b border-gray-100 dark:border-gray-800">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <BookOpenCheck className="w-4 h-4 text-white" />
-          </div>
-          {sidebarOpen && (
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-              DA Sheet Manager
-            </span>
-          )}
+        <div className="flex items-center px-3 h-14 border-b border-gray-100 dark:border-gray-800">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 w-full hover:opacity-80 transition-opacity"
+            title="Go to Dashboard"
+          >
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <BookOpenCheck className="w-4 h-4 text-white" />
+            </div>
+            {sidebarOpen && (
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                DA Sheet Manager
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Nav links */}
