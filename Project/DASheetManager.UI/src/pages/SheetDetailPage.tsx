@@ -326,7 +326,7 @@ export function SheetDetailPage() {
           <div>
             <div className="font-semibold text-amber-800">Top Recommendation</div>
             <div className="text-sm text-amber-700">
-              {winner.vendorName} — Overall Score: {winner.overallScore.toFixed(2)}
+              {winner.vendorName} — Overall Score: {winner.overallScore.toFixed(0)}
             </div>
           </div>
         </div>
@@ -500,7 +500,7 @@ export function SheetDetailPage() {
                           savedScore?.isWinner ? 'bg-amber-100 text-amber-900' : '',
                         )}
                       >
-                        {liveTotal.toFixed(2)}
+                        {liveTotal.toFixed(0)}
                       </td>
                     </Fragment>
                   )
@@ -611,7 +611,7 @@ function CatBlock({
               <Fragment key={v.vendorId}>
                 <td colSpan={2} className="border border-gray-200 bg-gray-50" />
                 <td className="px-3 py-2 text-center border border-gray-200 text-xs font-semibold">
-                  {subtotal.toFixed(2)}
+                  {subtotal.toFixed(0)}
                 </td>
               </Fragment>
             )
