@@ -871,6 +871,20 @@ function HistorySection({ sheetId }: { sheetId: number }) {
               </span>
             </div>
             {log.summary && <p className="text-xs text-gray-500 mt-0.5">{log.summary}</p>}
+            {log.changes && log.changes.length > 0 && (
+              <ul className="mt-1 space-y-0.5 text-xs">
+                {log.changes.map((c, i) => (
+                  <li key={i} className="text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">{c.scope}</span>
+                    <span className="mx-1 text-gray-400">·</span>
+                    <span>{c.field}:</span>
+                    <span className="ml-1 text-red-500 line-through">{c.oldValue ?? '—'}</span>
+                    <span className="mx-1 text-gray-400">→</span>
+                    <span className="text-green-600">{c.newValue ?? '—'}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <span className="text-xs text-gray-400">{log.changedByName}</span>
           </div>
         </div>

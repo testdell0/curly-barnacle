@@ -245,6 +245,21 @@ export interface SheetDetail {
 export interface CreateSheetRequest {
   name: string
   sourceTemplateId: number
+  categories?: CreateSheetCategoryDraft[]
+}
+
+export interface CreateSheetCategoryDraft {
+  sourceCategoryId?: number
+  name: string
+  sortOrder: number
+  parameters: CreateSheetParamDraft[]
+}
+
+export interface CreateSheetParamDraft {
+  sourceParamId?: number
+  name: string
+  weightage: number
+  sortOrder: number
 }
 
 // ── Vendors ───────────────────────────────────────────────────────────────
@@ -319,8 +334,16 @@ export interface AuditLogDto {
   sheetId: number
   action: string
   summary?: string
+  changes?: AuditFieldChange[]
   changedByName: string
   changedAt: string
+}
+
+export interface AuditFieldChange {
+  scope: string
+  field: string
+  oldValue?: string
+  newValue?: string
 }
 
 // ── API errors ────────────────────────────────────────────────────────────

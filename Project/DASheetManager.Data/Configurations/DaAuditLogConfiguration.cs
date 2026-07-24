@@ -15,6 +15,7 @@ public class DaAuditLogConfiguration : IEntityTypeConfiguration<DaAuditLog>
         builder.Property(e => e.EntityType).HasColumnName("ENTITY_TYPE").HasMaxLength(50).IsRequired();
         builder.Property(e => e.EntityId).HasColumnName("ENTITY_ID").IsRequired();
         builder.Property(e => e.Action).HasColumnName("ACTION").HasMaxLength(30).IsRequired();
+        builder.Property(e => e.Summary).HasColumnName("SUMMARY").HasMaxLength(500);
         builder.Property(e => e.OldValues).HasColumnName("OLD_VALUES").HasColumnType("CLOB");
         builder.Property(e => e.NewValues).HasColumnName("NEW_VALUES").HasColumnType("CLOB");
         builder.Property(e => e.PerformedBy).HasColumnName("PERFORMED_BY").IsRequired();

@@ -6,6 +6,7 @@ public class DaAuditLog
     public string EntityType { get; set; } = string.Empty;
     public int EntityId { get; set; }
     public string Action { get; set; } = string.Empty;
+    public string? Summary { get; set; }
     public string? OldValues { get; set; }
     public string? NewValues { get; set; }
     public int PerformedBy { get; set; }

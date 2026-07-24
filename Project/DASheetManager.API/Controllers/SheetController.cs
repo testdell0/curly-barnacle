@@ -74,6 +74,22 @@ public class SheetController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(ApiErrors.ValidationError("Sheet name is required."));
 
+        if (request.Categories is { Count: > 0 })
+        {
+            foreach (var cat in request.Categories)
+            {
+                if (string.IsNullOrWhiteSpace(cat.Name))
+                    return BadRequest(ApiErrors.ValidationError("Category name is required."));
+                foreach (var p in cat.Parameters)
+                {
+                    if (string.IsNullOrWhiteSpace(p.Name))
+                        return BadRequest(ApiErrors.ValidationError("Parameter name is required."));
+                    if (p.Weightage < 0)
+                        return BadRequest(ApiErrors.ValidationError("Parameter weightage must be zero or greater."));
+                }
+            }
+        }
+
         try
         {
             var sheet = await _sheetService.CreateFromTemplateAsync(request, GetUserId());
