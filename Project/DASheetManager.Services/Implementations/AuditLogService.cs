@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DASheetManager.Data.Entities;
 using DASheetManager.Data.Repositories;
 using DASheetManager.Services.DTOs;
@@ -28,7 +29,8 @@ public class AuditLogService : IAuditLogService
             LogId         = a.LogId,
             SheetId       = a.EntityId,
             Action        = a.Action,
-            Summary       = a.OldValues,
+            Summary       = a.Summary ?? a.OldValues, // legacy rows stored summary in OldValues
+            Changes       = TryDeserializeChanges(a.NewValues),
             ChangedByName = a.Performer?.FullName ?? "System",
             ChangedAt     = a.PerformedAt
         }).ToList();
@@ -44,7 +46,8 @@ public class AuditLogService : IAuditLogService
                 EntityId    = request.SheetId,
                 PerformedBy = request.ChangedBy,
                 Action      = request.Action,
-                OldValues   = request.Summary ?? request.OldValues,
+                Summary     = request.Summary,
+                OldValues   = request.OldValues,
                 NewValues   = request.NewValues,
                 PerformedAt = DateTime.UtcNow
             });
@@ -53,6 +56,27 @@ public class AuditLogService : IAuditLogService
         catch
         {
             // Audit logging must never crash the calling operation
+        }
+    }
+
+    private static List<AuditFieldChange>? TryDeserializeChanges(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        var trimmed = json.TrimStart();
+        if (!trimmed.StartsWith("[")) return null; // legacy payloads (evaluation arrays without Scope/Field/OldValue/NewValue keys) or non-JSON
+
+        try
+        {
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var list = JsonSerializer.Deserialize<List<AuditFieldChange>>(json, opts);
+            if (list == null || list.Count == 0) return null;
+            // Sanity check: at least one element must have a Field and Scope filled in.
+            if (!list.Any(c => !string.IsNullOrEmpty(c.Field) && !string.IsNullOrEmpty(c.Scope))) return null;
+            return list;
+        }
+        catch
+        {
+            return null;
         }
     }
 }

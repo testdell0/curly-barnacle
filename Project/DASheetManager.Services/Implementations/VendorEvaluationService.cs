@@ -135,6 +135,24 @@ public class VendorEvaluationService : IVendorEvaluationService
 
     public async Task BulkSaveEvaluationsAsync(int sheetId, BulkSaveEvaluationsRequest request, int userId)
     {
+        // Snapshot prior state for per-field diffing (must happen BEFORE upsert)
+        var priorList = await _uow.VendorEvaluations.Query()
+            .AsNoTracking()
+            .Where(e => e.Vendor.SheetId == sheetId)
+            .Select(e => new { e.VendorId, e.SheetParamId, e.EvalScore, e.VendorComment })
+            .ToListAsync();
+        var priorByKey = priorList.ToDictionary(e => (e.VendorId, e.SheetParamId));
+
+        // Human-readable name lookups for audit scope
+        var vendorNames = await _uow.Vendors.Query()
+            .AsNoTracking()
+            .Where(v => v.SheetId == sheetId)
+            .ToDictionaryAsync(v => v.VendorId, v => v.Name);
+        var paramNames = await _uow.SheetJudgmentParams.Query()
+            .AsNoTracking()
+            .Where(p => p.Category.SheetId == sheetId)
+            .ToDictionaryAsync(p => p.SheetParamId, p => p.Name);
+
         foreach (var entry in request.Evaluations)
         {
             if (entry.EvalScore.HasValue && (entry.EvalScore < 0 || entry.EvalScore > 10))
@@ -185,15 +203,53 @@ public class VendorEvaluationService : IVendorEvaluationService
             throw new InvalidOperationException("Evaluation save failed due to a duplicate entry. Please refresh and try again.");
         }
 
-        var scoresSet = request.Evaluations.Count(e => e.EvalScore.HasValue);
-        var comments  = request.Evaluations.Count(e => !string.IsNullOrWhiteSpace(e.VendorComment));
+        // Build per-field before → after change list
+        var changes = new List<AuditFieldChange>();
+        foreach (var entry in request.Evaluations)
+        {
+            priorByKey.TryGetValue((entry.VendorId, entry.SheetParamId), out var prior);
+            var vendorName = vendorNames.TryGetValue(entry.VendorId, out var vn) ? vn : $"Vendor #{entry.VendorId}";
+            var paramName  = paramNames.TryGetValue(entry.SheetParamId, out var pn) ? pn : $"Param #{entry.SheetParamId}";
+            var scope = $"{vendorName} → {paramName}";
+
+            var priorScore = prior?.EvalScore;
+            if (priorScore != entry.EvalScore)
+            {
+                changes.Add(new AuditFieldChange
+                {
+                    Scope    = scope,
+                    Field    = "Score",
+                    OldValue = priorScore?.ToString() ?? "—",
+                    NewValue = entry.EvalScore?.ToString() ?? "—"
+                });
+            }
+
+            var priorComment = string.IsNullOrEmpty(prior?.VendorComment) ? null : prior!.VendorComment;
+            var newComment   = string.IsNullOrEmpty(entry.VendorComment)  ? null : entry.VendorComment;
+            if (priorComment != newComment)
+            {
+                changes.Add(new AuditFieldChange
+                {
+                    Scope    = scope,
+                    Field    = "Comment",
+                    OldValue = priorComment ?? "—",
+                    NewValue = newComment ?? "—"
+                });
+            }
+        }
+
+        // Skip audit entirely on no-op saves
+        if (changes.Count == 0) return;
+
+        var scoreChanges   = changes.Count(c => c.Field == "Score");
+        var commentChanges = changes.Count(c => c.Field == "Comment");
         await _auditLog.RecordAsync(new RecordAuditRequest
         {
             SheetId   = sheetId,
             ChangedBy = userId,
             Action    = "Evaluations Saved",
-            Summary   = $"Saved {request.Evaluations.Count} evaluation(s): {scoresSet} score(s) set, {comments} comment(s) set",
-            NewValues = System.Text.Json.JsonSerializer.Serialize(request.Evaluations)
+            Summary   = $"{changes.Count} change(s): {scoreChanges} score(s), {commentChanges} comment(s)",
+            NewValues = System.Text.Json.JsonSerializer.Serialize(changes)
         });
     }
 

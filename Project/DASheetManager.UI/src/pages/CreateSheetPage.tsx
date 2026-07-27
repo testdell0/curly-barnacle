@@ -1,19 +1,61 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ApiError } from '@/api/client'
 import { usePublishedTemplates, useTemplateDetail, useCreateSheet } from '@/hooks/useSheets'
+import type { CreateSheetCategoryDraft } from '@/types/da-types'
 
 export function CreateSheetPage() {
   const navigate = useNavigate()
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>()
   const [sheetName, setSheetName] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [drafts, setDrafts] = useState<CreateSheetCategoryDraft[]>([])
 
   const { data: templates, isLoading: loadingTemplates } = usePublishedTemplates()
   const { data: templateDetail } = useTemplateDetail(selectedTemplateId)
   const createSheet = useCreateSheet()
+
+  // Seed drafts from the selected template. Switching templates discards prior edits.
+  useEffect(() => {
+    if (!templateDetail) { setDrafts([]); return }
+    setDrafts(templateDetail.categories.map((cat) => ({
+      sourceCategoryId: cat.categoryId,
+      name: cat.name,
+      sortOrder: cat.sortOrder,
+      parameters: cat.parameters.map((p) => ({
+        sourceParamId: p.paramId,
+        name: p.name,
+        weightage: p.weightage,
+        sortOrder: p.sortOrder,
+      })),
+    })))
+  }, [templateDetail])
+
+  function updateParam(catIdx: number, paramIdx: number, patch: Partial<{ name: string; weightage: number }>) {
+    setDrafts((prev) => prev.map((cat, ci) => ci !== catIdx ? cat : {
+      ...cat,
+      parameters: cat.parameters.map((p, pi) => pi !== paramIdx ? p : { ...p, ...patch }),
+    }))
+  }
+
+  function removeParam(catIdx: number, paramIdx: number) {
+    setDrafts((prev) => prev.map((cat, ci) => ci !== catIdx ? cat : {
+      ...cat,
+      parameters: cat.parameters.filter((_, pi) => pi !== paramIdx),
+    }))
+  }
+
+  function addParam(catIdx: number) {
+    setDrafts((prev) => prev.map((cat, ci) => ci !== catIdx ? cat : {
+      ...cat,
+      parameters: [
+        ...cat.parameters,
+        { sourceParamId: undefined, name: '', weightage: 0, sortOrder: cat.parameters.length },
+      ],
+    }))
+  }
 
   async function handleCreate() {
     if (!selectedTemplateId || !sheetName.trim()) {
@@ -22,11 +64,21 @@ export function CreateSheetPage() {
     }
     if (!templateDetail) return
 
+    // Client-side sanity checks matching the backend
+    for (const cat of drafts) {
+      if (!cat.name.trim()) { setError('Every category needs a name.'); return }
+      for (const p of cat.parameters) {
+        if (!p.name.trim()) { setError(`Parameter name is required in "${cat.name}".`); return }
+        if (p.weightage < 0) { setError(`Weightage cannot be negative in "${cat.name}".`); return }
+      }
+    }
+
     setError(null)
     try {
       const sheet = await createSheet.mutateAsync({
         name: sheetName.trim(),
         sourceTemplateId: selectedTemplateId,
+        categories: drafts,
       })
       navigate(`/sheets/${sheet.sheetId}`)
     } catch (err) {
@@ -102,29 +154,76 @@ export function CreateSheetPage() {
         )}
       </div>
 
-      {/* Template Preview */}
+      {/* Customizable Template Preview */}
       {templateDetail && (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
-            Template Preview: {templateDetail.name}
-          </h2>
-          <div className="space-y-3">
-            {templateDetail.categories.map((cat) => (
-              <div key={cat.categoryId}>
-                <h3 className="text-sm font-medium text-gray-800">{cat.name}</h3>
-                <ul className="mt-1 space-y-0.5">
-                  {cat.parameters.map((p) => (
-                    <li
-                      key={p.paramId}
-                      className="text-xs text-gray-600 flex items-center justify-between max-w-md"
-                    >
-                      <span>{p.name}</span>
-                      <span className="text-gray-400">{p.weightage}%</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+              Customize Parameters — {templateDetail.name}
+            </h2>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            Rename, adjust weightage, add or remove parameters before creating the sheet. The source template is not modified.
+          </p>
+
+          <div className="space-y-5">
+            {drafts.map((cat, catIdx) => {
+              const catTotal = cat.parameters.reduce((s, p) => s + (Number(p.weightage) || 0), 0)
+              return (
+                <div
+                  key={cat.sourceCategoryId ?? `new-${catIdx}`}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{cat.name}</h3>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      {catTotal}% total
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {cat.parameters.map((p, paramIdx) => (
+                      <div key={p.sourceParamId ?? `new-${paramIdx}`} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={p.name}
+                          onChange={(e) => updateParam(catIdx, paramIdx, { name: e.target.value })}
+                          placeholder="Parameter name"
+                          className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            value={p.weightage}
+                            min={0}
+                            onChange={(e) => updateParam(catIdx, paramIdx, { weightage: Number(e.target.value) || 0 })}
+                            className="w-20 px-2 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-md text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="text-xs text-gray-400 w-4">%</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeParam(catIdx, paramIdx)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          title="Remove parameter"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => addParam(catIdx)}
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add parameter
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

@@ -110,27 +110,55 @@ public class DASheetService : IDASheetService
             CreatedBy = userId
         };
 
-        foreach (var tCat in template.Categories.OrderBy(c => c.SortOrder))
+        if (request.Categories is { Count: > 0 })
         {
-            var category = new DaSheetCategory
+            foreach (var cCat in request.Categories.OrderBy(c => c.SortOrder))
             {
-                SourceCategoryId = tCat.CategoryId,
-                Name = tCat.Name,
-                SortOrder = tCat.SortOrder
-            };
-
-            foreach (var tParam in tCat.Parameters.OrderBy(p => p.SortOrder))
-            {
-                category.Parameters.Add(new DaSheetJudgmentParam
+                var category = new DaSheetCategory
                 {
-                    SourceParamId = tParam.ParamId,
-                    Name = tParam.Name,
-                    Weightage = tParam.Weightage,
-                    SortOrder = tParam.SortOrder
-                });
-            }
+                    SourceCategoryId = cCat.SourceCategoryId,
+                    Name = cCat.Name,
+                    SortOrder = cCat.SortOrder
+                };
 
-            sheet.Categories.Add(category);
+                foreach (var cParam in cCat.Parameters.OrderBy(p => p.SortOrder))
+                {
+                    category.Parameters.Add(new DaSheetJudgmentParam
+                    {
+                        SourceParamId = cParam.SourceParamId,
+                        Name = cParam.Name,
+                        Weightage = cParam.Weightage,
+                        SortOrder = cParam.SortOrder
+                    });
+                }
+
+                sheet.Categories.Add(category);
+            }
+        }
+        else
+        {
+            foreach (var tCat in template.Categories.OrderBy(c => c.SortOrder))
+            {
+                var category = new DaSheetCategory
+                {
+                    SourceCategoryId = tCat.CategoryId,
+                    Name = tCat.Name,
+                    SortOrder = tCat.SortOrder
+                };
+
+                foreach (var tParam in tCat.Parameters.OrderBy(p => p.SortOrder))
+                {
+                    category.Parameters.Add(new DaSheetJudgmentParam
+                    {
+                        SourceParamId = tParam.ParamId,
+                        Name = tParam.Name,
+                        Weightage = tParam.Weightage,
+                        SortOrder = tParam.SortOrder
+                    });
+                }
+
+                sheet.Categories.Add(category);
+            }
         }
 
         await _uow.Sheets.AddAsync(sheet);
